@@ -35,9 +35,8 @@ export const AdminOverlay: React.FC<AdminProps> = ({ isOpen, onClose, appointmen
 
     // Fetch analytics data
     const fetchAnalytics = useCallback(async () => {
-        setAnalyticsLoading(true);
         try {
-            const response = await fetch('http://localhost:3001/api/analytics');
+            const response = await fetch('/api/analytics');
             if (response.ok) {
                 const data = await response.json();
                 setAnalytics(data);
@@ -81,7 +80,7 @@ export const AdminOverlay: React.FC<AdminProps> = ({ isOpen, onClose, appointmen
         e.preventDefault();
         setIsLoading(true);
         try {
-            const response = await fetch('http://localhost:3001/api/login', {
+            const response = await fetch('/api/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ password }),

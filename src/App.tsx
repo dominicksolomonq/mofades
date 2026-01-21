@@ -6,7 +6,7 @@ import { AdminOverlay } from './components/AdminOverlay';
 import { Experience } from './components/Experience';
 import { Appointment } from './types';
 
-const API_URL = 'http://localhost:3001';
+const API_URL = '';
 
 const App: React.FC = () => {
     // UI State
