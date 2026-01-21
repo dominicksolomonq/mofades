@@ -3,12 +3,12 @@ import { GalleryProps } from '../types';
 
 export const GalleryOverlay: React.FC<GalleryProps> = ({ isOpen, onClose }) => {
     const images = [
-        "Bild 1.png",
-        "Bild 2.png",
-        "Bild 3.png",
-        "Bild 4.png",
-        "Bild 5.png",
-        "Bild 6.png"
+        "/bild-1.png",
+        "/bild-2.png",
+        "/bild-3.png",
+        "/bild-4.png",
+        "/bild-5.png",
+        "/bild-6.png"
     ];
 
     return (
