@@ -16,10 +16,21 @@ interface Appointment {
     customerEmail?: string;
 }
 
+// Type definition for page views (analytics)
+interface PageView {
+    id: string;
+    timestamp: Date;
+    page: string;
+    userAgent?: string;
+    referrer?: string;
+}
+
 // --- In-Memory Database ---
 // This is a simple in-memory store. For a real application,
 // you should replace this with a proper database like PostgreSQL, MongoDB, etc.
 let appointments: Appointment[] = [];
+let pageViews: PageView[] = [];
+let totalVisits = 0;
 
 // --- Appointment Generation Logic ---
 const generateWeeklyAppointments = (): Appointment[] => {
@@ -29,10 +40,10 @@ const generateWeeklyAppointments = (): Appointment[] => {
     for (let i = 0; i < 7; i++) {
         const currentDate = new Date(today);
         currentDate.setDate(today.getDate() + i);
-        
+
         const dateStr = currentDate.toISOString().split('T')[0];
         const dayOfWeek = currentDate.getDay();
-        
+
         let startHour = 13;
         let endHour = 19;
         if (dayOfWeek === 0 || dayOfWeek === 5 || dayOfWeek === 6) {
@@ -147,7 +158,7 @@ app.post('/api/appointments/:id/toggle', (req, res) => {
     }
 
     const apt = appointments[appointmentIndex];
-    
+
     // Cycle: free -> blocked -> free, and booked -> free
     if (apt.status === 'free') {
         apt.status = 'blocked';
@@ -174,6 +185,89 @@ app.post('/api/login', (req, res) => {
     }
 });
 
+// --- Analytics API Routes ---
+
+// POST /api/analytics/pageview - Track a page view
+app.post('/api/analytics/pageview', (req, res) => {
+    const { page, referrer } = req.body;
+    const userAgent = req.headers['user-agent'];
+
+    const pageView: PageView = {
+        id: `pv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        timestamp: new Date(),
+        page: page || '/',
+        userAgent: userAgent,
+        referrer: referrer || undefined
+    };
+
+    pageViews.push(pageView);
+    totalVisits++;
+
+    // Keep only last 1000 page views to prevent memory issues
+    if (pageViews.length > 1000) {
+        pageViews = pageViews.slice(-1000);
+    }
+
+    res.json({ success: true, viewId: pageView.id });
+});
+
+// GET /api/analytics - Retrieve analytics data (Admin)
+app.get('/api/analytics', (req, res) => {
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+
+    // Get views for the last 7 days
+    const last7Days: { [key: string]: number } = {};
+    for (let i = 6; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        last7Days[dateStr] = 0;
+    }
+
+    // Get views by hour for today
+    const todayByHour: { [key: string]: number } = {};
+    for (let h = 0; h < 24; h++) {
+        todayByHour[`${h.toString().padStart(2, '0')}:00`] = 0;
+    }
+
+    // Aggregate page views
+    pageViews.forEach(pv => {
+        const pvDate = pv.timestamp.toISOString().split('T')[0];
+        const pvHour = pv.timestamp.getHours().toString().padStart(2, '0') + ':00';
+
+        // Count by day
+        if (last7Days.hasOwnProperty(pvDate)) {
+            last7Days[pvDate]++;
+        }
+
+        // Count by hour for today
+        if (pvDate === today) {
+            todayByHour[pvHour]++;
+        }
+    });
+
+    // Calculate today's views
+    const todayViews = pageViews.filter(pv =>
+        pv.timestamp.toISOString().split('T')[0] === today
+    ).length;
+
+    // Get recent page views (last 10)
+    const recentViews = pageViews.slice(-10).reverse().map(pv => ({
+        id: pv.id,
+        timestamp: pv.timestamp.toISOString(),
+        page: pv.page,
+        referrer: pv.referrer
+    }));
+
+    res.json({
+        totalVisits,
+        todayViews,
+        last7Days: Object.entries(last7Days).map(([date, count]) => ({ date, count })),
+        todayByHour: Object.entries(todayByHour).map(([hour, count]) => ({ hour, count })),
+        recentViews
+    });
+});
 
 // --- Start Server ---
 app.listen(PORT, () => {

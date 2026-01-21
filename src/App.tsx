@@ -13,12 +13,12 @@ const App: React.FC = () => {
     const [isGalleryOpen, setIsGalleryOpen] = useState(false);
     const [isBookingOpen, setIsBookingOpen] = useState(false);
     const [isAdminOpen, setIsAdminOpen] = useState(false);
-    
+
     // Data State
     const [appointments, setAppointments] = useState<Appointment[]>([]);
-    
+
     const [modelUrl, setModelUrl] = useState<string | null>(import.meta.env.VITE_MODEL_URL || '/test123.glb');
-    
+
     const [isModelLoaded, setIsModelLoaded] = useState(false);
 
     // Fetch appointments from the backend
@@ -36,6 +36,26 @@ const App: React.FC = () => {
     useEffect(() => {
         fetchAppointments();
     }, [fetchAppointments]);
+
+    // Track page view for analytics
+    useEffect(() => {
+        const trackPageView = async () => {
+            try {
+                await fetch(`${API_URL}/api/analytics/pageview`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        page: window.location.pathname,
+                        referrer: document.referrer || undefined
+                    })
+                });
+            } catch (error) {
+                // Silently fail - analytics shouldn't break the app
+                console.debug('Analytics tracking failed:', error);
+            }
+        };
+        trackPageView();
+    }, []);
 
     // Handlers that now interact with the backend
     const handleBookSlot = async (id: string, name: string, email: string) => {
@@ -68,11 +88,11 @@ const App: React.FC = () => {
 
     return (
         <div className="relative w-screen h-screen bg-[#050505] overflow-hidden">
-            
+
             {/* 3D Scene Layer */}
             <div className="absolute inset-0 z-0">
-                <Experience 
-                    url={modelUrl} 
+                <Experience
+                    url={modelUrl}
                     onLoad={() => setIsModelLoaded(true)}
                     onError={() => {
                         console.warn("Failed to load model. Please ensure 'test123.glb' is in your public folder.");
@@ -82,33 +102,33 @@ const App: React.FC = () => {
             </div>
 
             {/* Main UI Layer */}
-            <OverlayUI 
-                onOpenGallery={() => setIsGalleryOpen(true)} 
+            <OverlayUI
+                onOpenGallery={() => setIsGalleryOpen(true)}
                 onOpenBooking={() => setIsBookingOpen(true)}
                 onOpenAdmin={() => setIsAdminOpen(true)}
                 modelLoaded={isModelLoaded}
             />
 
             {/* Overlays */}
-            <GalleryOverlay 
-                isOpen={isGalleryOpen} 
-                onClose={() => setIsGalleryOpen(false)} 
+            <GalleryOverlay
+                isOpen={isGalleryOpen}
+                onClose={() => setIsGalleryOpen(false)}
             />
-            
-            <BookingOverlay 
+
+            <BookingOverlay
                 isOpen={isBookingOpen}
                 onClose={() => setIsBookingOpen(false)}
                 appointments={appointments}
                 onBookSlot={handleBookSlot}
             />
 
-            <AdminOverlay 
+            <AdminOverlay
                 isOpen={isAdminOpen}
                 onClose={() => setIsAdminOpen(false)}
                 appointments={appointments}
                 onToggleSlot={handleToggleSlot}
             />
-            
+
         </div>
     );
 };

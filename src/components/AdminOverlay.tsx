@@ -1,6 +1,15 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { AdminProps } from '../types';
 import { AdminCalendar } from './AdminCalendar';
+
+// Analytics data type
+interface AnalyticsData {
+    totalVisits: number;
+    todayViews: number;
+    last7Days: { date: string; count: number }[];
+    todayByHour: { hour: string; count: number }[];
+    recentViews: { id: string; timestamp: string; page: string; referrer?: string }[];
+}
 
 export const AdminOverlay: React.FC<AdminProps> = ({ isOpen, onClose, appointments, onToggleSlot }) => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -8,9 +17,13 @@ export const AdminOverlay: React.FC<AdminProps> = ({ isOpen, onClose, appointmen
     const [error, setError] = useState(false);
     const [selectedDate, setSelectedDate] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState<'termine' | 'kalender'>('termine');
+    const [activeTab, setActiveTab] = useState<'termine' | 'kalender' | 'analytics'>('termine');
     const [isVisible, setIsVisible] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
+
+    // Analytics state
+    const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+    const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
     // Handle visibility transitions
     React.useEffect(() => {
@@ -19,6 +32,29 @@ export const AdminOverlay: React.FC<AdminProps> = ({ isOpen, onClose, appointmen
             setIsClosing(false);
         }
     }, [isOpen]);
+
+    // Fetch analytics data
+    const fetchAnalytics = useCallback(async () => {
+        setAnalyticsLoading(true);
+        try {
+            const response = await fetch('http://localhost:3001/api/analytics');
+            if (response.ok) {
+                const data = await response.json();
+                setAnalytics(data);
+            }
+        } catch (error) {
+            console.error('Failed to fetch analytics:', error);
+        } finally {
+            setAnalyticsLoading(false);
+        }
+    }, []);
+
+    // Fetch analytics when tab is selected
+    useEffect(() => {
+        if (isLoggedIn && activeTab === 'analytics') {
+            fetchAnalytics();
+        }
+    }, [isLoggedIn, activeTab, fetchAnalytics]);
 
     const uniqueDates = useMemo(() => {
         const dates = Array.from(new Set(appointments.map(a => a.date)));
@@ -164,7 +200,7 @@ export const AdminOverlay: React.FC<AdminProps> = ({ isOpen, onClose, appointmen
                     {/* Header with Tab Navigation */}
                     <div className="text-center mb-3 md:mb-4 flex-shrink-0">
                         <h2 className="text-white text-xl md:text-3xl font-semibold mb-3 tracking-tight ios-text-shadow">
-                            {activeTab === 'termine' ? 'Termine' : 'Kalender'}
+                            {activeTab === 'termine' ? 'Termine' : activeTab === 'kalender' ? 'Kalender' : 'Aufrufe'}
                         </h2>
 
                         {/* Tab Navigation */}
@@ -192,6 +228,17 @@ export const AdminOverlay: React.FC<AdminProps> = ({ isOpen, onClose, appointmen
                                         Kalender
                                     </span>
                                 </button>
+                                <button
+                                    onClick={() => setActiveTab('analytics')}
+                                    className={`px-4 py-2 text-xs md:text-sm font-medium rounded-lg transition-all duration-300 ${activeTab === 'analytics' ? 'bg-white text-black' : 'text-white/60 hover:text-white'}`}
+                                >
+                                    <span className="flex items-center gap-1.5">
+                                        <svg className="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                                        </svg>
+                                        Aufrufe
+                                    </span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -200,6 +247,120 @@ export const AdminOverlay: React.FC<AdminProps> = ({ isOpen, onClose, appointmen
                     {activeTab === 'kalender' ? (
                         <div className="flex-1 min-h-0 overflow-hidden">
                             <AdminCalendar appointments={appointments} />
+                        </div>
+                    ) : activeTab === 'analytics' ? (
+                        /* Analytics Dashboard */
+                        <div className="flex-1 min-h-0 overflow-y-auto ios-scrollbar">
+                            {analyticsLoading ? (
+                                <div className="flex items-center justify-center h-full">
+                                    <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                                </div>
+                            ) : analytics ? (
+                                <div className="space-y-4 md:space-y-6">
+                                    {/* Analytics Stats Cards */}
+                                    <div className="grid grid-cols-2 gap-3 md:gap-4">
+                                        <div className="ios-stat-card-mobile group">
+                                            <div className="ios-stat-icon-mobile" style={{ background: 'rgba(59, 130, 246, 0.2)', color: '#3b82f6' }}>
+                                                <svg className="w-3.5 h-3.5 md:w-5 md:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                </svg>
+                                            </div>
+                                            <p className="text-white text-2xl md:text-4xl font-bold tracking-tight">{analytics.totalVisits}</p>
+                                            <p className="text-white/40 text-[10px] md:text-xs font-medium tracking-wide uppercase">Gesamt Aufrufe</p>
+                                        </div>
+
+                                        <div className="ios-stat-card-mobile group">
+                                            <div className="ios-stat-icon-mobile" style={{ background: 'rgba(34, 197, 94, 0.2)', color: '#22c55e' }}>
+                                                <svg className="w-3.5 h-3.5 md:w-5 md:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                                                </svg>
+                                            </div>
+                                            <p className="text-white text-2xl md:text-4xl font-bold tracking-tight">{analytics.todayViews}</p>
+                                            <p className="text-white/40 text-[10px] md:text-xs font-medium tracking-wide uppercase">Heute</p>
+                                        </div>
+                                    </div>
+
+                                    {/* 7-Day Chart */}
+                                    <div className="ios-stat-card-mobile p-4 md:p-6">
+                                        <h3 className="text-white/60 text-xs md:text-sm font-medium mb-4 uppercase tracking-wider">Letzte 7 Tage</h3>
+                                        <div className="flex items-end justify-between gap-2 h-32 md:h-40">
+                                            {analytics.last7Days.map((day, index) => {
+                                                const maxCount = Math.max(...analytics.last7Days.map(d => d.count), 1);
+                                                const height = (day.count / maxCount) * 100;
+                                                const dateObj = new Date(day.date);
+                                                const dayName = dateObj.toLocaleDateString('de-DE', { weekday: 'short' });
+                                                return (
+                                                    <div key={day.date} className="flex flex-col items-center flex-1 gap-2">
+                                                        <span className="text-white/60 text-[10px] md:text-xs font-medium">{day.count}</span>
+                                                        <div
+                                                            className="w-full rounded-t-lg transition-all duration-500"
+                                                            style={{
+                                                                height: `${Math.max(height, 4)}%`,
+                                                                background: index === analytics.last7Days.length - 1
+                                                                    ? 'linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%)'
+                                                                    : 'linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%)',
+                                                                animationDelay: `${index * 50}ms`
+                                                            }}
+                                                        />
+                                                        <span className="text-white/40 text-[8px] md:text-[10px] font-medium uppercase">{dayName}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    {/* Recent Views */}
+                                    <div className="ios-stat-card-mobile p-4 md:p-6">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h3 className="text-white/60 text-xs md:text-sm font-medium uppercase tracking-wider">Letzte Besuche</h3>
+                                            <button
+                                                onClick={fetchAnalytics}
+                                                className="text-white/40 hover:text-white transition-colors p-1"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <div className="space-y-2">
+                                            {analytics.recentViews.length > 0 ? (
+                                                analytics.recentViews.map((view, index) => {
+                                                    const timestamp = new Date(view.timestamp);
+                                                    const timeStr = timestamp.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                                                    const dateStr = timestamp.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+                                                    return (
+                                                        <div
+                                                            key={view.id}
+                                                            className="flex items-center justify-between py-2 border-b border-white/5 last:border-0"
+                                                            style={{ animationDelay: `${index * 30}ms` }}
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                                                                <span className="text-white/80 text-sm">{view.page}</span>
+                                                            </div>
+                                                            <span className="text-white/40 text-xs">{dateStr} {timeStr}</span>
+                                                        </div>
+                                                    );
+                                                })
+                                            ) : (
+                                                <p className="text-white/30 text-sm text-center py-4">Noch keine Besuche aufgezeichnet</p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Info Note */}
+                                    <div className="text-center py-2">
+                                        <p className="text-white/20 text-[10px] md:text-xs">
+                                            📊 Daten werden in Echtzeit aktualisiert
+                                        </p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-center h-full">
+                                    <p className="text-white/40 text-sm">Keine Daten verfügbar</p>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <>

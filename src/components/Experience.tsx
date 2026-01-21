@@ -1,27 +1,34 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Stars, Environment, OrbitControls, ContactShadows } from '@react-three/drei';
 import { SceneModel } from './SceneModel';
 import { ModelProps } from '../types';
 
 export const Experience: React.FC<ModelProps> = (props) => {
+    // Track when entrance animation is complete (for potential future use)
+    const [isAnimationComplete, setIsAnimationComplete] = useState(false);
+
+    const handleAnimationComplete = () => {
+        setIsAnimationComplete(true);
+    };
+
     return (
         <Canvas
             shadows // Enable shadow map
             camera={{ position: [0, 0, 8], fov: 45 }}
             gl={{ antialias: true, alpha: true, toneMappingExposure: 1.2 }}
             className="w-full h-full"
-            style={{ background: 'transparent' }} 
+            style={{ background: 'transparent' }}
         >
-            {/* Controls */}
-            <OrbitControls 
-                autoRotate 
+            {/* Controls - camera orbits around the scene for background movement */}
+            <OrbitControls
+                autoRotate={true}
                 autoRotateSpeed={0.8}
-                enableZoom={false} 
+                enableZoom={false}
                 enablePan={false}
                 enableDamping
                 dampingFactor={0.05}
-                minPolarAngle={Math.PI / 2 - 0.5} 
+                minPolarAngle={Math.PI / 2 - 0.5}
                 maxPolarAngle={Math.PI / 2 + 0.5}
             />
 
@@ -33,11 +40,11 @@ export const Experience: React.FC<ModelProps> = (props) => {
 
             {/* Studio Lighting Setup */}
             <ambientLight intensity={0.2} />
-            
+
             {/* Main Key Light - Casting shadows */}
-            <spotLight 
-                position={[10, 10, 10]} 
-                intensity={15} 
+            <spotLight
+                position={[10, 10, 10]}
+                intensity={15}
                 angle={0.4}
                 penumbra={1}
                 castShadow
@@ -45,10 +52,10 @@ export const Experience: React.FC<ModelProps> = (props) => {
             />
 
             {/* Rim Light (Back Light) - Creates the silhouette/edge definition */}
-            <spotLight 
-                position={[-5, 5, -5]} 
-                intensity={20} 
-                color="#aaccff" 
+            <spotLight
+                position={[-5, 5, -5]}
+                intensity={20}
+                color="#aaccff"
                 angle={0.5}
                 penumbra={1}
             />
@@ -58,7 +65,7 @@ export const Experience: React.FC<ModelProps> = (props) => {
 
             {/* Model */}
             <Suspense fallback={null}>
-               <SceneModel {...props} />
+                <SceneModel {...props} onAnimationComplete={handleAnimationComplete} />
             </Suspense>
         </Canvas>
     );
