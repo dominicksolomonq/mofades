@@ -1,0 +1,6 @@
+The webhook URL from make.com should be pasted into the `backend/.env` file. Look for the line that starts with `WEBHOOK_URL=` and replace the placeholder URL with your Make.com webhook URL.
+
+Example:
+```
+WEBHOOK_URL=YOUR_MAKE_COM_WEBHOOK_URL_HERE
+```
