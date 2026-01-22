@@ -15,6 +15,7 @@ export const Experience: React.FC<ModelProps> = (props) => {
     return (
         <Canvas
             shadows // Enable shadow map
+            dpr={[1, 1.5]} // Optimization: Limit pixel ratio to save GPU
             camera={{ position: [0, 0, 8], fov: 45 }}
             gl={{ antialias: true, alpha: true, toneMappingExposure: 1.2 }}
             className="w-full h-full"

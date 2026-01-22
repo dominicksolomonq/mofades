@@ -67,7 +67,66 @@ npm install
 # Production Build erstellen
 npm run build
 
-# Static Files servieren (z.B. mit nginx)
+# Static Files servieren (mit nginx)
+sudo cp -r dist/* /var/www/html/
+
+# Permissions für Uploads setzen!
+# Das Backend muss in diesen Ordner schreiben können
+sudo mkdir -p /var/www/html/uploads
+sudo chown -R pi:pi /home/pi/mo-test-19.1/backend/uploads
+# Oder Symlink erstellen, damit Nginx/Backend synchron sind:
+sudo ln -s /home/pi/mo-test-19.1/backend/uploads /var/www/html/uploads
+```
+
+### 5. Nginx Konfiguration (WICHTIG!)
+Damit API, Webhooks und Bilder-Uploads funktionieren, muss Nginx als Reverse-Proxy eingerichtet werden.
+
+Bearbeite die Config: `sudo nano /etc/nginx/sites-available/default`
+
+```nginx
+server {
+    listen 80;
+    server_name _;
+
+    root /var/www/html;
+    index index.html;
+
+    # Frontend (React Router Support)
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Backend API Proxy
+    location /api {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Uploads Proxy (Bilder vom Backend servieren)
+    location /uploads {
+        proxy_pass http://localhost:3001;
+    }
+}
+```
+Danach Nginx neu starten: `sudo systemctl restart nginx`
+
+### ⚠️ WICHTIG: Proxy Konfiguration
+
+Für die lokale Entwicklung auf Windows wurde kurzzeitig ein Proxy in `vite.config.ts` genutzt. 
+**Dieser wurde bereits entfernt**, damit der Production-Build auf dem Raspberry Pi reibungslos funktioniert.
+
+Falls Sie jemals Verbindungsprobleme haben, stellen Sie sicher, dass `vite.config.ts` **KEINEN** Proxy-Block enthält:
+
+```typescript
+// ✅ KORREKT für Raspberry Pi / Production:
+server: {
+  port: 3000,
+  host: '0.0.0.0',
+},
 ```
 
 ---
@@ -82,6 +141,10 @@ npm run build
 | POST    | `/api/login`                   | Admin Login                    |
 | POST    | `/api/analytics/pageview`      | Seitenaufruf tracken           |
 | GET     | `/api/analytics`               | Analytics-Daten abrufen        |
+| GET     | `/api/gallery`                 | Galerie-Bilder abrufen         |
+| POST    | `/api/gallery/upload`          | Bild hochladen                 |
+| POST    | `/api/gallery/:id/approve`     | Bild freigeben (Admin)         |
+| DELETE  | `/api/gallery/:id`             | Bild löschen (Admin)           |
 
 ---
 

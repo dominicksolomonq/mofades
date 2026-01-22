@@ -124,38 +124,23 @@ export const SceneModel: React.FC<ExtendedModelProps> = ({ url, onError, onLoad,
                 animationPhase.current = 'fastspin';
             }
         } else if (animationPhase.current === 'fastspin') {
-            // Fast spin that smoothly decelerates into idle rotation
-            // Total duration includes both the spin-down and transition to idle
-            const totalDuration = ANIMATION_CONFIG.fastspin.duration + ANIMATION_CONFIG.transition.duration;
-            const progress = Math.min(elapsed / totalDuration, 1);
+            // Velocity-based animation logic for perfect smoothness
+            // We interpolate velocity instead of position to ensure momentum is conserved
 
-            // Idle speed we want to reach
-            const idleSpeedRadPerSec = 0.5; // Slow continuous rotation
+            const spinDuration = 3.5;
+            const startVelocity = 12.0; // Fast initial spin
+            const targetIdleVelocity = 0.5;   // Must match the idle speed exactly
 
-            // Start with faster rotation and smoothly decelerate
-            // Using a combination of rotation progress and continuous delta-based movement
-            if (elapsed < ANIMATION_CONFIG.fastspin.duration) {
-                // During initial fast spin phase - add rotations with deceleration
-                const spinProgress = elapsed / ANIMATION_CONFIG.fastspin.duration;
-                const easedSpinProgress = easeOutCubic(spinProgress);
+            const progress = Math.min(elapsed / spinDuration, 1);
 
-                const totalRotation = ANIMATION_CONFIG.fastspin.rotations * Math.PI * 2;
-                const spinRotation = phaseStartRotation.current + easedSpinProgress * totalRotation;
+            // Cubic out easing for velocity drop-off
+            const velocityProgress = 1 - Math.pow(1 - progress, 3);
 
-                // Also add continuous idle rotation underneath
-                currentRotation.current = spinRotation + (elapsed * idleSpeedRadPerSec * 0.3);
-            } else {
-                // Transition phase - just continue with idle speed, no pause
-                const transitionElapsed = elapsed - ANIMATION_CONFIG.fastspin.duration;
-                const spinEndRotation = phaseStartRotation.current + ANIMATION_CONFIG.fastspin.rotations * Math.PI * 2;
+            // Current angular velocity
+            const currentVelocity = startVelocity - (startVelocity - targetIdleVelocity) * velocityProgress;
 
-                // Smoothly blend from slightly faster to idle speed
-                const transitionProgress = Math.min(transitionElapsed / ANIMATION_CONFIG.transition.duration, 1);
-                const speedMultiplier = 1 + (1 - easeOutCubic(transitionProgress)) * 0.5; // 1.5x to 1x
-
-                currentRotation.current = spinEndRotation + (transitionElapsed * idleSpeedRadPerSec * speedMultiplier);
-            }
-
+            // Integrate velocity to get new position
+            currentRotation.current += currentVelocity * delta;
             modelRef.current.rotation.y = currentRotation.current;
 
             if (progress >= 1) {
@@ -177,10 +162,10 @@ export const SceneModel: React.FC<ExtendedModelProps> = ({ url, onError, onLoad,
     // Tablet (viewport.width < 6): 75% size
     // Desktop: 90% size (slightly smaller for better fit)
     const responsiveScale = viewport.width < 4
-        ? 0.6
+        ? 0.45   // Mobile: Much smaller (was 0.6)
         : viewport.width < 6
-            ? 0.75
-            : 0.9;
+            ? 0.65   // Tablet: Smaller (was 0.75)
+            : 0.85;  // Desktop: Slightly smaller (was 0.9)
 
     return (
         <group ref={groupRef} scale={[responsiveScale, responsiveScale, responsiveScale]}>

@@ -269,6 +269,117 @@ app.get('/api/analytics', (req, res) => {
     });
 });
 
+// ... (existing imports)
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+
+// ... (existing helper functions)
+
+// --- Gallery Logic & Storage ---
+interface GalleryItem {
+    id: string;
+    imageUrl: string;
+    username: string; // For generating the avatar
+    status: 'pending' | 'approved';
+    timestamp: Date;
+}
+
+let galleryItems: GalleryItem[] = [];
+
+// Multer Storage Configuration
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadDir = path.join(__dirname, '../uploads');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({ storage: storage });
+
+// ... (Express app setup)
+
+// Serve uploded files statically
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// ... (Existing routes)
+
+// --- Gallery Routes ---
+
+// GET /api/gallery - Get images
+// If ?admin=true is passed, returns all (pending + approved).
+// Otherwise returns only approved.
+app.get('/api/gallery', (req, res) => {
+    const isAdmin = req.query.admin === 'true';
+    if (isAdmin) {
+        // Return mostly recent first
+        res.json(galleryItems.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()));
+    } else {
+        const approved = galleryItems.filter(item => item.status === 'approved');
+        res.json(approved.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()));
+    }
+});
+
+// POST /api/gallery/upload - Upload a new image
+app.post('/api/gallery/upload', upload.single('image'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'No image file uploaded.' });
+    }
+
+    const { username } = req.body;
+
+    const newItem: GalleryItem = {
+        id: `img-${Date.now()}`,
+        imageUrl: `/uploads/${req.file.filename}`,
+        username: username || 'Anonymous', // Default to Anonymous if no name provided
+        status: 'pending', // Default strictly to pending (moderated)
+        timestamp: new Date()
+    };
+
+    galleryItems.push(newItem);
+    res.json({ success: true, item: newItem, message: 'Upload successful, waiting for approval.' });
+});
+
+// POST /api/gallery/:id/approve - Approve an image (Admin)
+app.post('/api/gallery/:id/approve', (req, res) => {
+    const { id } = req.params;
+    const item = galleryItems.find(i => i.id === id);
+    if (!item) return res.status(404).json({ error: 'Item not found' });
+
+    item.status = 'approved';
+    res.json({ success: true, item });
+});
+
+// DELETE /api/gallery/:id - Delete/Reject an image (Admin)
+app.delete('/api/gallery/:id', (req, res) => {
+    const { id } = req.params;
+    const index = galleryItems.findIndex(i => i.id === id);
+    if (index === -1) return res.status(404).json({ error: 'Item not found' });
+
+    // Optionally delete file from disk here too, but for simplicity we just remove from db
+    const fileToDelete = galleryItems[index].imageUrl; // e.g. /uploads/filename.jpg
+
+    // Try to delete physical file
+    try {
+        const filePath = path.join(__dirname, '..', fileToDelete);
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
+    } catch (e) {
+        console.error('Failed to delete file:', e);
+    }
+
+    galleryItems.splice(index, 1);
+    res.json({ success: true });
+});
+
 // --- Start Server ---
 app.listen(PORT, () => {
     console.log(`Backend server is running on http://localhost:${PORT}`);

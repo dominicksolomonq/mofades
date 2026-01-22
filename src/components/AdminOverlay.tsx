@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { AdminProps } from '../types';
+import { AdminProps, GalleryItem } from '../types';
 import { AdminCalendar } from './AdminCalendar';
 
 // Analytics data type
@@ -17,13 +17,15 @@ export const AdminOverlay: React.FC<AdminProps> = ({ isOpen, onClose, appointmen
     const [error, setError] = useState(false);
     const [selectedDate, setSelectedDate] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState<'termine' | 'kalender' | 'analytics'>('termine');
-    const [isVisible, setIsVisible] = useState(false);
-    const [isClosing, setIsClosing] = useState(false);
-
-    // Analytics state
     const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
     const [analyticsLoading, setAnalyticsLoading] = useState(false);
+
+    // Gallery state
+    const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
+    const [activeTab, setActiveTab] = useState<'termine' | 'kalender' | 'analytics' | 'galerie'>('termine');
+    const [isVisible, setIsVisible] = useState(false);
+    const [isClosing, setIsClosing] = useState(false);
+    const [galleryViewMode, setGalleryViewMode] = useState<'inbox' | 'live'>('inbox');
 
     // Handle visibility transitions
     React.useEffect(() => {
@@ -48,12 +50,40 @@ export const AdminOverlay: React.FC<AdminProps> = ({ isOpen, onClose, appointmen
         }
     }, []);
 
-    // Fetch analytics when tab is selected
+    // Fetch analytics/gallery when tab is selected
     useEffect(() => {
-        if (isLoggedIn && activeTab === 'analytics') {
-            fetchAnalytics();
+        if (isLoggedIn) {
+            if (activeTab === 'analytics') fetchAnalytics();
+            if (activeTab === 'galerie') fetchGallery();
         }
     }, [isLoggedIn, activeTab, fetchAnalytics]);
+
+    const fetchGallery = useCallback(async () => {
+        try {
+            const res = await fetch('/api/gallery?admin=true');
+            if (res.ok) setGalleryItems(await res.json());
+        } catch (e) {
+            console.error('Failed to fetch gallery', e);
+        }
+    }, []);
+
+    const handleApprove = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            await fetch(`/api/gallery/${id}/approve`, { method: 'POST' });
+            fetchGallery();
+        } catch (e) { console.error(e); }
+    };
+
+    const handleDeleteImage = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (confirm('Bild wirklich löschen?')) {
+            try {
+                await fetch(`/api/gallery/${id}`, { method: 'DELETE' });
+                fetchGallery();
+            } catch (e) { console.error(e); }
+        }
+    };
 
     const uniqueDates = useMemo(() => {
         const dates = Array.from(new Set(appointments.map(a => a.date)));
@@ -238,6 +268,17 @@ export const AdminOverlay: React.FC<AdminProps> = ({ isOpen, onClose, appointmen
                                         Aufrufe
                                     </span>
                                 </button>
+                                <button
+                                    onClick={() => setActiveTab('galerie')}
+                                    className={`px-4 py-2 text-xs md:text-sm font-medium rounded-lg transition-all duration-300 ${activeTab === 'galerie' ? 'bg-white text-black' : 'text-white/60 hover:text-white'}`}
+                                >
+                                    <span className="flex items-center gap-1.5">
+                                        <svg className="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                                        </svg>
+                                        Galerie
+                                    </span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -360,6 +401,139 @@ export const AdminOverlay: React.FC<AdminProps> = ({ isOpen, onClose, appointmen
                                     <p className="text-white/40 text-sm">Keine Daten verfügbar</p>
                                 </div>
                             )}
+                        </div>
+                    ) : activeTab === 'galerie' ? (
+                        /* Gallery Moderation - Complex Dashboard */
+                        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                            {/* Sub-Navigation (Inbox vs Live) */}
+                            <div className="flex justify-center mb-4 flex-shrink-0">
+                                <div className="bg-white/5 backdrop-blur-md border border-white/10 p-1 rounded-xl flex gap-1 shadow-lg">
+                                    <button
+                                        onClick={() => setGalleryViewMode('inbox')}
+                                        className={`px-6 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all duration-300 flex items-center gap-2 ${galleryViewMode === 'inbox' ? 'bg-white text-black shadow-md' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                                    >
+                                        Eingang
+                                        {galleryItems.filter(i => i.status === 'pending').length > 0 && (
+                                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${galleryViewMode === 'inbox' ? 'bg-black text-white' : 'bg-red-500 text-white'}`}>
+                                                {galleryItems.filter(i => i.status === 'pending').length}
+                                            </span>
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={() => setGalleryViewMode('live')}
+                                        className={`px-6 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all duration-300 flex items-center gap-2 ${galleryViewMode === 'live' ? 'bg-white text-black shadow-md' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                                    >
+                                        Live
+                                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${galleryViewMode === 'live' ? 'bg-black/10 text-black' : 'bg-white/10 text-white'}`}>
+                                            {galleryItems.filter(i => i.status === 'approved').length}
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Gallery Content Area */}
+                            <div className="flex-1 overflow-y-auto ios-scrollbar p-1">
+                                {galleryViewMode === 'inbox' ? (
+                                    /* --- INBOX / PENDING VIEW --- */
+                                    <div className="space-y-4 max-w-2xl mx-auto">
+                                        {galleryItems.filter(i => i.status === 'pending').length === 0 ? (
+                                            <div className="flex flex-col items-center justify-center h-64 text-white/30">
+                                                <svg className="w-12 h-12 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <p className="text-sm">Alles erledigt! Keine offenen Anfragen.</p>
+                                            </div>
+                                        ) : (
+                                            galleryItems.filter(i => i.status === 'pending').map((item, index) => (
+                                                <div
+                                                    key={item.id}
+                                                    className="bg-[#1C1C1E] border border-white/10 rounded-2xl overflow-hidden shadow-xl animate-fade-in flex flex-col md:flex-row"
+                                                    style={{ animationDelay: `${index * 100}ms` }}
+                                                >
+                                                    {/* Image Preview */}
+                                                    <div className="w-full md:w-48 aspect-square md:aspect-auto relative group cursor-zoom-in bg-black">
+                                                        <img src={item.imageUrl} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt="Preview" />
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent md:hidden"></div>
+                                                    </div>
+
+                                                    {/* Details & Actions */}
+                                                    <div className="flex-1 p-4 md:p-6 flex flex-col justify-between">
+                                                        <div>
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <div className="flex items-center gap-3">
+                                                                    {/* User Avatar (Generated) */}
+                                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg bg-gradient-to-br from-blue-500 to-indigo-600`}>
+                                                                        {item.username.substring(0, 2).toUpperCase()}
+                                                                    </div>
+                                                                    <div>
+                                                                        <h4 className="text-white font-semibold text-sm">{item.username}</h4>
+                                                                        <p className="text-white/40 text-[10px]">@{item.username.toLowerCase().replace(/\s/g, '')} • Wartet auf Freigabe</p>
+                                                                    </div>
+                                                                </div>
+                                                                <span className="text-white/30 text-[10px] font-mono bg-white/5 px-2 py-1 rounded">
+                                                                    {new Date(item.timestamp).toLocaleDateString()}
+                                                                </span>
+                                                            </div>
+                                                            <div className="h-px bg-white/5 my-3"></div>
+                                                        </div>
+
+                                                        {/* Action Buttons */}
+                                                        <div className="flex gap-3 mt-2">
+                                                            <button
+                                                                onClick={(e) => handleDeleteImage(item.id, e)}
+                                                                className="flex-1 py-3 rounded-xl bg-white/5 hover:bg-red-500/20 hover:text-red-400 text-white/60 text-xs font-semibold transition-all border border-white/5 hover:border-red-500/30 flex items-center justify-center gap-2"
+                                                            >
+                                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                </svg>
+                                                                Ablehnen
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => handleApprove(item.id, e)}
+                                                                className="flex-[2] py-3 rounded-xl bg-white text-black hover:bg-emerald-400 hover:shadow-[0_0_20px_rgba(52,211,153,0.4)] text-xs font-bold transition-all flex items-center justify-center gap-2 transform active:scale-95"
+                                                            >
+                                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                                                </svg>
+                                                                Freigeben
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                ) : (
+                                    /* --- LIVE VIEW --- */
+                                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                                        {galleryItems.filter(i => i.status === 'approved').map(item => (
+                                            <div key={item.id} className="relative group rounded-xl overflow-hidden bg-black aspect-square border border-white/10 shadow-lg">
+                                                <img src={item.imageUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 opacity-80 group-hover:opacity-100" />
+
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
+                                                    <p className="text-white text-xs font-semibold truncate">{item.username}</p>
+                                                    <p className="text-white/40 text-[10px] mb-2">{new Date(item.timestamp).toLocaleDateString()}</p>
+
+                                                    <button
+                                                        onClick={(e) => handleDeleteImage(item.id, e)}
+                                                        className="w-full py-1.5 bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white text-[10px] uppercase font-bold rounded border border-red-500/30 transition-colors backdrop-blur-sm"
+                                                    >
+                                                        Löschen
+                                                    </button>
+                                                </div>
+
+                                                {/* Live Badge */}
+                                                <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e]"></div>
+                                            </div>
+                                        ))}
+                                        {galleryItems.filter(i => i.status === 'approved').length === 0 && (
+                                            <div className="col-span-full py-12 text-center text-white/30 text-xs">
+                                                Keine aktiven Bilder in der Galerie.
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     ) : (
                         <>

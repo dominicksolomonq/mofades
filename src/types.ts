@@ -1,8 +1,11 @@
 import React from 'react';
 
 export interface GalleryItem {
-    id: number;
-    url: string;
+    id: string; // Changed to string to match backend
+    imageUrl: string; // Changed from url
+    username: string; // For avatar generation
+    status: 'pending' | 'approved';
+    timestamp?: string; // Optional, date string from JSON
 }
 
 export interface Appointment {

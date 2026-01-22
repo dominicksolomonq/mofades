@@ -36,69 +36,11 @@ export const BookingOverlay: React.FC<BookingProps> = ({ isOpen, onClose, appoin
 
     const playSuccessSound = () => {
         try {
-            const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-            if (AudioContext) {
-                const ctx = new AudioContext();
-
-                // Create a more authentic Apple Pay "ding-ding" sound
-                // Two-tone pattern: First tone, then second higher tone
-                const playTone = (frequency: number, startTime: number, duration: number, volume: number) => {
-                    // Main oscillator - sine for purity
-                    const osc1 = ctx.createOscillator();
-                    const gain1 = ctx.createGain();
-                    osc1.type = 'sine';
-                    osc1.frequency.setValueAtTime(frequency, startTime);
-
-                    // Secondary oscillator - slight detune for richness
-                    const osc2 = ctx.createOscillator();
-                    const gain2 = ctx.createGain();
-                    osc2.type = 'sine';
-                    osc2.frequency.setValueAtTime(frequency * 2, startTime); // Octave harmonic
-
-                    // Percussive envelope - fast attack, medium decay
-                    gain1.gain.setValueAtTime(0, startTime);
-                    gain1.gain.linearRampToValueAtTime(volume, startTime + 0.008); // Super fast attack
-                    gain1.gain.exponentialRampToValueAtTime(volume * 0.3, startTime + 0.08); // Quick initial decay
-                    gain1.gain.exponentialRampToValueAtTime(0.001, startTime + duration); // Smooth tail
-
-                    // Harmonic envelope - softer
-                    gain2.gain.setValueAtTime(0, startTime);
-                    gain2.gain.linearRampToValueAtTime(volume * 0.15, startTime + 0.008);
-                    gain2.gain.exponentialRampToValueAtTime(0.001, startTime + duration * 0.6);
-
-                    osc1.connect(gain1);
-                    gain1.connect(ctx.destination);
-                    osc2.connect(gain2);
-                    gain2.connect(ctx.destination);
-
-                    osc1.start(startTime);
-                    osc1.stop(startTime + duration + 0.1);
-                    osc2.start(startTime);
-                    osc2.stop(startTime + duration + 0.1);
-                };
-
-                // Apple Pay signature two-tone pattern
-                // First tone: E7 (2637 Hz) - bright and clear
-                // Second tone: G#7 (3322 Hz) - higher, creates the "success" feeling
-                const now = ctx.currentTime;
-                playTone(2637.02, now, 0.4, 0.12);           // First ding - E7
-                playTone(3322.44, now + 0.12, 0.5, 0.10);    // Second ding - G#7 (major third up)
-
-                // Subtle sub-harmonic for warmth
-                const subOsc = ctx.createOscillator();
-                const subGain = ctx.createGain();
-                subOsc.type = 'sine';
-                subOsc.frequency.setValueAtTime(659.25, now); // E5 - two octaves below
-                subGain.gain.setValueAtTime(0, now);
-                subGain.gain.linearRampToValueAtTime(0.04, now + 0.01);
-                subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-                subOsc.connect(subGain);
-                subGain.connect(ctx.destination);
-                subOsc.start(now);
-                subOsc.stop(now + 0.4);
-            }
+            const audio = new Audio('/success.mp3');
+            audio.volume = 0.5;
+            audio.play().catch(e => console.warn('Audio playback failed', e));
         } catch (e) {
-            console.error("Audio play failed", e);
+            console.error('Sound error', e);
         }
     };
 
@@ -119,15 +61,9 @@ export const BookingOverlay: React.FC<BookingProps> = ({ isOpen, onClose, appoin
     return (
         <div className={`fixed inset-0 z-40 flex items-end md:items-center justify-center booking-backdrop ${isOpen ? 'booking-backdrop-open' : 'booking-backdrop-closed'}`}>
 
-            {/* Modal Container */}
-            <div className={`relative w-full md:w-[450px] bg-[#0D0D0F] md:rounded-2xl rounded-t-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] booking-modal ${isOpen ? 'booking-modal-open' : 'booking-modal-closed'} ${showSuccess ? 'success-glow' : ''}`}>
-                {/* Circling Border Shine Effect - Two orbs splitting from top center */}
-                {showSuccess && (
-                    <>
-                        <div className="border-shine-left"></div>
-                        <div className="border-shine-right"></div>
-                    </>
-                )}
+            {/* Modal Container - Clean without shine glow */}
+            <div className={`relative w-full md:w-[450px] bg-[#0D0D0F] md:rounded-2xl rounded-t-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] booking-modal ${isOpen ? 'booking-modal-open' : 'booking-modal-closed'}`}>
+                {/* Apple Pay Animation Container - Clean, no extra borders */}
 
                 {/* Header */}
                 <div className="flex justify-between items-center p-3 md:p-4 bg-[#2C2C2E]/50 border-b border-white/5">
@@ -139,15 +75,25 @@ export const BookingOverlay: React.FC<BookingProps> = ({ isOpen, onClose, appoin
                 <div className="flex-1 overflow-y-auto p-3 md:p-4 relative">
 
                     {showSuccess ? (
-                        <div className="flex flex-col items-center justify-center h-64 animate-pop-in">
-                            {/* Apple Pay Style Checkmark */}
-                            <div className="w-24 h-24 rounded-full border-[3px] border-[#30D158] flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(48,209,88,0.3)]">
-                                <svg className="w-12 h-12 text-[#30D158]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" className="animate-[draw_0.6s_ease-in-out]" />
+                        <div className="flex flex-col items-center justify-center h-full animate-pop-in relative z-10">
+                            {/* Apple Pay Style Checkmark - Exact 1:1 Implementation */}
+                            <div className="mb-6 relative w-24 h-24 flex items-center justify-center apple-icon-container">
+                                <svg className="w-20 h-20" viewBox="0 0 52 52">
+                                    <circle
+                                        cx="26" cy="26" r="25" fill="none"
+                                        className="apple-circle"
+                                    />
+                                    <path
+                                        fill="none"
+                                        d="M14.1 27.2l7.1 7.2 16.7-16.8"
+                                        className="apple-check"
+                                    />
                                 </svg>
                             </div>
-                            <h3 className="text-white text-xl font-bold mb-1">Gebucht</h3>
-                            <p className="text-zinc-400 text-sm">Bestätigung wurde gesendet.</p>
+                            <h3 className="text-white text-2xl font-bold mb-2 tracking-tight apple-text-reveal">Gebucht</h3>
+                            <p className="text-zinc-400 text-sm apple-text-reveal-delayed text-center px-8 leading-relaxed">
+                                Bestätigung wurde gesendet.
+                            </p>
                         </div>
                     ) : (
                         <>
@@ -275,12 +221,67 @@ export const BookingOverlay: React.FC<BookingProps> = ({ isOpen, onClose, appoin
             </div>
 
             <style>{`
-                /* Backdrop Animations */
+                /* Apple Pay Animation CSS - Refined 1:1 Feel */
+                .apple-icon-container {
+                    animation: scalePulse 0.4s cubic-bezier(0.25, 1.5, 0.5, 1) 0.4s forwards;
+                    opacity: 0;
+                    animation-fill-mode: forwards;
+                }
+                
+                /* Reveal container first */
+                @keyframes scalePulse {
+                    0% { opacity: 0; transform: scale(0.5); }
+                    60% { opacity: 1; transform: scale(1.1); }
+                    100% { opacity: 1; transform: scale(1); }
+                }
+
+                .apple-circle {
+                    stroke: #30d158;
+                    stroke-width: 2.5;
+                    stroke-miterlimit: 10;
+                    stroke-dasharray: 166;
+                    stroke-dashoffset: 166;
+                    stroke-linecap: round;
+                    animation: stroke 0.4s cubic-bezier(0.65, 0, 0.45, 1) 0.1s forwards;
+                }
+
+                .apple-check {
+                    stroke: #30d158;
+                    stroke-width: 3.5;
+                    stroke-dasharray: 48;
+                    stroke-dashoffset: 48;
+                    stroke-linejoin: round;
+                    stroke-linecap: round;
+                    animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.4s forwards;
+                }
+
+                .apple-text-reveal {
+                    opacity: 0;
+                    transform: translateY(10px);
+                    animation: textFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
+                }
+
+                .apple-text-reveal-delayed {
+                    opacity: 0;
+                    transform: translateY(10px);
+                    animation: textFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards;
+                }
+
+                @keyframes stroke {
+                    100% { stroke-dashoffset: 0; }
+                }
+
+                @keyframes textFadeUp {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+
+                /* Standard Modal Animations */
                 .booking-backdrop {
                     transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
                 }
                 .booking-backdrop-open {
-                    background: rgba(0, 0, 0, 0.7);
+                    background: rgba(0, 0, 0, 0.6);
                     backdrop-filter: blur(20px) saturate(180%);
                     -webkit-backdrop-filter: blur(20px) saturate(180%);
                     opacity: 1;
@@ -294,13 +295,12 @@ export const BookingOverlay: React.FC<BookingProps> = ({ isOpen, onClose, appoin
                     pointer-events: none;
                 }
 
-                /* Modal Animations - Futuristic Entrance */
+                /* Modal - Futuristic Entrance */
                 .booking-modal {
                     transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
                     box-shadow: 
-                        0 0 0 1px rgba(255, 255, 255, 0.05),
-                        0 25px 50px -12px rgba(0, 0, 0, 0.8),
-                        0 0 100px rgba(255, 255, 255, 0.03);
+                        0 20px 40px -10px rgba(0,0,0,0.5),
+                        0 0 0 1px rgba(255,255,255,0.05);
                 }
                 .booking-modal-open {
                     transform: translateY(0) scale(1);
@@ -311,224 +311,37 @@ export const BookingOverlay: React.FC<BookingProps> = ({ isOpen, onClose, appoin
                     opacity: 0;
                 }
 
-                /* Day Pills - Futuristic Style */
+                /* Day Pills */
                 .day-pill {
                     position: relative;
                     background: rgba(255, 255, 255, 0.03);
                     border: 1px solid rgba(255, 255, 255, 0.05);
                     overflow: hidden;
                 }
-                .day-pill::before {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%, transparent 100%);
-                    opacity: 0;
-                    transition: opacity 0.3s ease;
-                }
-                .day-pill::after {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    border-radius: inherit;
-                    background: radial-gradient(circle at center, rgba(255,255,255,0.08) 0%, transparent 70%);
-                    opacity: 0;
-                    transition: opacity 0.3s ease;
-                }
-                
-                .day-pill-default:hover {
-                    background: rgba(255, 255, 255, 0.06);
-                    border-color: rgba(255, 255, 255, 0.12);
-                    transform: translateY(-1px) scale(1.02);
-                }
-                .day-pill-default:hover::before {
-                    opacity: 0.5;
-                }
-                .day-pill-default:hover::after {
-                    opacity: 1;
-                }
-                .day-pill-default:active {
-                    transform: translateY(0) scale(0.98);
-                }
-
-                /* Selected Day - Clean White/Grey */
-                /* Selected Day - Clean White/Grey */
                 .day-pill-selected {
                     background: linear-gradient(180deg, #ffffff 0%, #e5e5e7 100%) !important;
                     border-color: rgba(255, 255, 255, 0.3) !important;
-                    box-shadow: 
-                        0 4px 15px rgba(255, 255, 255, 0.15),
-                        0 0 30px rgba(255, 255, 255, 0.05),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+                    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.15);
                     transform: translateY(-1px);
-                    border-radius: 12px; /* Ensure rounding */
+                    border-radius: 12px;
                 }
-                .day-pill-selected::before {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    border-radius: inherit; /* Crucial for round glow */
-                    background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 40%);
-                    opacity: 1;
-                }
-
-                /* Success Glow Effect on Modal */
-                .success-glow {
-                    box-shadow: 
-                        0 0 0 1px rgba(255, 255, 255, 0.15),
-                        0 0 80px rgba(255, 255, 255, 0.2),
-                        0 0 120px rgba(255, 255, 255, 0.1),
-                        0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
-                }
-
-                /* Dual Light Point - Small and Simple */
-                .border-shine-left,
-                .border-shine-right {
-                    position: absolute;
-                    width: 8px;
-                    height: 8px;
-                    pointer-events: none;
-                    z-index: 100;
-                    border-radius: 50%;
-                    background: white;
-                    box-shadow: 
-                        0 0 4px rgba(255,255,255,1),
-                        0 0 8px rgba(255,255,255,0.8),
-                        0 0 16px rgba(255,255,255,0.5);
-                }
-
-                /* Left light - smooth continuous counterclockwise */
-                .border-shine-left {
-                    animation: shineLeft 3s linear forwards;
-                }
-
-                /* Right light - smooth continuous clockwise */
-                .border-shine-right {
-                    animation: shineRight 3s linear forwards;
-                }
-
-                @keyframes shineLeft {
-                    0% {
-                        top: 2px;
-                        left: 50%;
-                        opacity: 0;
-                    }
-                    3% {
-                        opacity: 1;
-                    }
-                    /* Travel to top-left corner */
-                    20% {
-                        top: 2px;
-                        left: 2px;
-                    }
-                    /* Travel down left side */
-                    45% {
-                        top: 50%;
-                        left: 2px;
-                    }
-                    /* Continue to bottom-left corner */
-                    65% {
-                        top: calc(100% - 10px);
-                        left: 2px;
-                    }
-                    /* Travel to bottom center */
-                    90% {
-                        top: calc(100% - 10px);
-                        left: 50%;
-                        opacity: 1;
-                    }
-                    100% {
-                        top: calc(100% - 10px);
-                        left: 50%;
-                        opacity: 0;
-                    }
-                }
-
-                @keyframes shineRight {
-                    0% {
-                        top: 2px;
-                        left: 50%;
-                        opacity: 0;
-                    }
-                    3% {
-                        opacity: 1;
-                    }
-                    /* Travel to top-right corner */
-                    20% {
-                        top: 2px;
-                        left: calc(100% - 10px);
-                    }
-                    /* Travel down right side */
-                    45% {
-                        top: 50%;
-                        left: calc(100% - 10px);
-                    }
-                    /* Continue to bottom-right corner */
-                    65% {
-                        top: calc(100% - 10px);
-                        left: calc(100% - 10px);
-                    }
-                    /* Travel to bottom center */
-                    90% {
-                        top: calc(100% - 10px);
-                        left: 50%;
-                        opacity: 1;
-                    }
-                    100% {
-                        top: calc(100% - 10px);
-                        left: 50%;
-                        opacity: 0;
-                    }
-                }
-
-                /* Flash effect when orbs meet at bottom */
-                .success-glow::after {
-                    content: '';
-                    position: absolute;
-                    bottom: 0;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    width: 100px;
-                    height: 2px;
-                    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
-                    animation: bottomFlash 2.5s ease-out forwards;
-                    opacity: 0;
-                    z-index: 99;
-                }
-
-                @keyframes bottomFlash {
-                    0%, 90% {
-                        opacity: 0;
-                        width: 0;
-                    }
-                    95% {
-                        opacity: 1;
-                        width: 200px;
-                    }
-                    100% {
-                        opacity: 0;
-                        width: 300px;
-                    }
-                }
-
-                @keyframes draw {
-                    0% { stroke-dasharray: 0 100; stroke-dashoffset: 0; }
-                    100% { stroke-dasharray: 100 0; stroke-dashoffset: 0; }
-                }
-                @keyframes popIn {
-                    0% { opacity: 0; transform: scale(0.9); }
-                    100% { opacity: 1; transform: scale(1); }
-                }
-                @keyframes slideIn {
-                    0% { opacity: 0; transform: translateX(20px); }
-                    100% { opacity: 1; transform: translateX(0); }
-                }
+                
                 .animate-pop-in {
                     animation: popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
                 }
                 .animate-slide-in {
                     animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
                 }
+
+                @keyframes popIn {
+                    0% { opacity: 0; transform: scale(0.95); }
+                    100% { opacity: 1; transform: scale(1); }
+                }
+                @keyframes slideIn {
+                    0% { opacity: 0; transform: translateX(20px); }
+                    100% { opacity: 1; transform: translateX(0); }
+                }
+
                 .no-scrollbar::-webkit-scrollbar {
                     display: none;
                 }
@@ -537,6 +350,6 @@ export const BookingOverlay: React.FC<BookingProps> = ({ isOpen, onClose, appoin
                     scrollbar-width: none;
                 }
             `}</style>
-        </div>
+        </div >
     );
 };
