@@ -334,7 +334,6 @@ const MonthView: React.FC<{
     );
 };
 
-// Week View Component
 const WeekView: React.FC<{
     weekDates: Date[];
     timeSlots: string[];
@@ -346,13 +345,29 @@ const WeekView: React.FC<{
 }> = ({ weekDates, timeSlots, getAppointmentsForDate, isToday, onSelectAppointment, formatTime, getStatusColor }) => {
     return (
         <div className="h-full flex flex-col">
-            {/* Day headers */}
-            <div className="grid grid-cols-8 gap-1 mb-2 sticky top-0 bg-[#0a0a0a] z-10 pb-2">
-                <div className="w-12"></div>
+            {/* Day headers - Responsive grid */}
+            <div className="grid grid-cols-4 md:grid-cols-8 gap-0.5 md:gap-1 mb-2 sticky top-0 bg-[#0a0a0a] z-10 pb-2">
+                <div className="w-10 md:w-12 hidden md:block"></div>
+                {weekDates.slice(0, 3).map((date, idx) => {
+                    const today = isToday(date);
+                    return (
+                        <div key={idx} className={`text-center md:hidden ${today ? 'text-white' : 'text-white/50'}`}>
+                            <div className="text-[8px] uppercase font-medium">
+                                {date.toLocaleDateString('de-DE', { weekday: 'short' })}
+                            </div>
+                            <div className={`text-sm font-semibold ${today ? 'bg-white text-black rounded-full w-6 h-6 flex items-center justify-center mx-auto' : ''}`}>
+                                {date.getDate()}
+                            </div>
+                        </div>
+                    );
+                })}
+                <div className="text-center text-white/30 text-[8px] md:hidden flex items-center justify-center">
+                    <span>+4</span>
+                </div>
                 {weekDates.map((date, idx) => {
                     const today = isToday(date);
                     return (
-                        <div key={idx} className={`text-center ${today ? 'text-white' : 'text-white/50'}`}>
+                        <div key={idx} className={`text-center hidden md:block ${today ? 'text-white' : 'text-white/50'}`}>
                             <div className="text-[10px] uppercase font-medium">
                                 {date.toLocaleDateString('de-DE', { weekday: 'short' })}
                             </div>
@@ -364,19 +379,43 @@ const WeekView: React.FC<{
                 })}
             </div>
 
-            {/* Time grid */}
+            {/* Time grid - Mobile shows first 3 days, Desktop shows all 7 */}
             <div className="flex-1 overflow-auto calendar-scrollbar">
                 {timeSlots.map(time => (
-                    <div key={time} className="grid grid-cols-8 gap-1 min-h-[60px] border-t border-white/5">
-                        <div className="w-12 text-[10px] text-white/40 pt-1 text-right pr-2">
+                    <div key={time} className="grid grid-cols-4 md:grid-cols-8 gap-0.5 md:gap-1 min-h-[50px] md:min-h-[60px] border-t border-white/5">
+                        <div className="w-10 md:w-12 text-[9px] md:text-[10px] text-white/40 pt-1 text-right pr-1 md:pr-2">
                             {time}
                         </div>
+                        {/* Mobile: Show first 3 days */}
+                        {weekDates.slice(0, 3).map((date, idx) => {
+                            const dayAppointments = getAppointmentsForDate(date);
+                            const timeAppointments = dayAppointments.filter(a => a.time === time);
+
+                            return (
+                                <div key={`mobile-${idx}`} className="relative p-0.5 md:hidden">
+                                    {timeAppointments.map(apt => (
+                                        <button
+                                            key={apt.id}
+                                            onClick={() => onSelectAppointment(apt)}
+                                            className={`
+                                                w-full text-left p-1 rounded-md text-[10px]
+                                                border ${getStatusColor(apt.status)}
+                                                hover:bg-white/20 transition-all
+                                            `}
+                                        >
+                                            <div className="text-white font-medium truncate">{apt.customerName?.split(' ')[0]}</div>
+                                        </button>
+                                    ))}
+                                </div>
+                            );
+                        })}
+                        {/* Desktop: Show all 7 days */}
                         {weekDates.map((date, idx) => {
                             const dayAppointments = getAppointmentsForDate(date);
                             const timeAppointments = dayAppointments.filter(a => a.time === time);
 
                             return (
-                                <div key={idx} className="relative p-0.5">
+                                <div key={idx} className="relative p-0.5 hidden md:block">
                                     {timeAppointments.map(apt => (
                                         <button
                                             key={apt.id}

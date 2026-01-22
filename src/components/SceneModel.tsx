@@ -12,18 +12,18 @@ const easeOutExpo = (t: number): number => t === 1 ? 1 : 1 - Math.pow(2, -10 * t
 // Animation phase types
 type AnimationPhase = 'windup' | 'fastspin' | 'transition' | 'idle';
 
-// Animation configuration - Elegant, premium feel
+// Animation configuration - Elegant, premium feel with slower, smoother animation
 const ANIMATION_CONFIG = {
     windup: {
-        duration: 0.8,        // longer wind-up for anticipation
-        rotation: -0.15,      // subtle counter-clockwise (less aggressive)
+        duration: 1.2,        // longer wind-up for anticipation and model loading time
+        rotation: -0.1,       // very subtle counter-clockwise (more elegant)
     },
     fastspin: {
-        duration: 2.5,        // slower, more elegant spin
-        rotations: 1.5,       // fewer rotations for premium feel
+        duration: 3.5,        // much slower, more elegant spin
+        rotations: 1.0,       // just one rotation for premium feel
     },
     transition: {
-        duration: 2.0,        // longer transition for ultra-smooth deceleration
+        duration: 2.5,        // longer transition for ultra-smooth deceleration
     }
 };
 
@@ -124,36 +124,38 @@ export const SceneModel: React.FC<ExtendedModelProps> = ({ url, onError, onLoad,
                 animationPhase.current = 'fastspin';
             }
         } else if (animationPhase.current === 'fastspin') {
-            // Fast spin: rapid clockwise rotations
-            const { duration, rotations } = ANIMATION_CONFIG.fastspin;
-            const progress = Math.min(elapsed / duration, 1);
-            const easedProgress = easeOutExpo(progress);
+            // Fast spin that smoothly decelerates into idle rotation
+            // Total duration includes both the spin-down and transition to idle
+            const totalDuration = ANIMATION_CONFIG.fastspin.duration + ANIMATION_CONFIG.transition.duration;
+            const progress = Math.min(elapsed / totalDuration, 1);
 
-            const totalRotation = rotations * Math.PI * 2;
-            currentRotation.current = phaseStartRotation.current + easedProgress * totalRotation;
-            modelRef.current.rotation.y = currentRotation.current;
+            // Idle speed we want to reach
+            const idleSpeedRadPerSec = 0.5; // Slow continuous rotation
 
-            if (progress >= 1) {
-                phaseStartRotation.current = currentRotation.current;
-                animationStartTime.current = now;
-                animationPhase.current = 'transition';
+            // Start with faster rotation and smoothly decelerate
+            // Using a combination of rotation progress and continuous delta-based movement
+            if (elapsed < ANIMATION_CONFIG.fastspin.duration) {
+                // During initial fast spin phase - add rotations with deceleration
+                const spinProgress = elapsed / ANIMATION_CONFIG.fastspin.duration;
+                const easedSpinProgress = easeOutCubic(spinProgress);
+
+                const totalRotation = ANIMATION_CONFIG.fastspin.rotations * Math.PI * 2;
+                const spinRotation = phaseStartRotation.current + easedSpinProgress * totalRotation;
+
+                // Also add continuous idle rotation underneath
+                currentRotation.current = spinRotation + (elapsed * idleSpeedRadPerSec * 0.3);
+            } else {
+                // Transition phase - just continue with idle speed, no pause
+                const transitionElapsed = elapsed - ANIMATION_CONFIG.fastspin.duration;
+                const spinEndRotation = phaseStartRotation.current + ANIMATION_CONFIG.fastspin.rotations * Math.PI * 2;
+
+                // Smoothly blend from slightly faster to idle speed
+                const transitionProgress = Math.min(transitionElapsed / ANIMATION_CONFIG.transition.duration, 1);
+                const speedMultiplier = 1 + (1 - easeOutCubic(transitionProgress)) * 0.5; // 1.5x to 1x
+
+                currentRotation.current = spinEndRotation + (transitionElapsed * idleSpeedRadPerSec * speedMultiplier);
             }
-        } else if (animationPhase.current === 'transition') {
-            // Transition: smooth deceleration from fast spin to idle speed
-            const { duration } = ANIMATION_CONFIG.transition;
-            const progress = Math.min(elapsed / duration, 1);
 
-            // Calculate speeds in radians per second
-            const idleSpeedRadPerSec = 0.8 * (Math.PI / 180) * 60; // ~0.838 rad/sec
-            const startSpeedRadPerSec = 2; // Gentler start speed for elegant feel
-
-            // Ultra-smooth interpolation using easeOutQuint for seamless deceleration
-            const easeOutQuint = (t: number) => 1 - Math.pow(1 - t, 5);
-            const easedProgress = easeOutQuint(progress);
-
-            const currentSpeedRadPerSec = startSpeedRadPerSec + (idleSpeedRadPerSec - startSpeedRadPerSec) * easedProgress;
-
-            currentRotation.current += currentSpeedRadPerSec * delta;
             modelRef.current.rotation.y = currentRotation.current;
 
             if (progress >= 1) {
@@ -163,14 +165,22 @@ export const SceneModel: React.FC<ExtendedModelProps> = ({ url, onError, onLoad,
                 }
             }
         } else if (animationPhase.current === 'idle') {
-            // Continue rotating the model at idle speed - seamless from transition
-            const idleSpeedRadPerSec = 0.8 * (Math.PI / 180) * 60; // ~0.838 rad/sec
+            // Continue rotating the model at constant idle speed - never stops
+            const idleSpeedRadPerSec = 0.5;
             currentRotation.current += idleSpeedRadPerSec * delta;
             modelRef.current.rotation.y = currentRotation.current;
         }
     });
 
-    const responsiveScale = viewport.width < 5.5 ? viewport.width / 6.5 : 1;
+    // Responsive scaling for mobile, tablet, and desktop
+    // Mobile (viewport.width < 4): 60% size
+    // Tablet (viewport.width < 6): 75% size
+    // Desktop: 90% size (slightly smaller for better fit)
+    const responsiveScale = viewport.width < 4
+        ? 0.6
+        : viewport.width < 6
+            ? 0.75
+            : 0.9;
 
     return (
         <group ref={groupRef} scale={[responsiveScale, responsiveScale, responsiveScale]}>

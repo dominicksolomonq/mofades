@@ -197,6 +197,11 @@ export const BookingOverlay: React.FC<BookingProps> = ({ isOpen, onClose, appoin
                                         ))}
                                     </div>
 
+                                    {/* Made by credit */}
+                                    <div className="absolute bottom-3 right-4">
+                                        <span className="text-[9px] text-zinc-700 italic opacity-50">made by domi</span>
+                                    </div>
+
                                     {currentSlots.length === 0 && (
                                         <div className="text-center py-10 text-zinc-500">
                                             <i className="far fa-calendar-times text-4xl mb-3 block opacity-50"></i>
@@ -324,43 +329,45 @@ export const BookingOverlay: React.FC<BookingProps> = ({ isOpen, onClose, appoin
                 .day-pill::after {
                     content: '';
                     position: absolute;
-                    inset: -50%;
-                    background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 60%);
+                    inset: 0;
+                    border-radius: inherit;
+                    background: radial-gradient(circle at center, rgba(255,255,255,0.08) 0%, transparent 70%);
                     opacity: 0;
-                    transition: all 0.4s ease;
-                    transform: scale(0);
+                    transition: opacity 0.3s ease;
                 }
                 
                 .day-pill-default:hover {
-                    background: rgba(255, 255, 255, 0.08);
-                    border-color: rgba(255, 255, 255, 0.15);
-                    transform: translateY(-2px) scale(1.05);
-                    box-shadow: 
-                        0 8px 25px rgba(0, 0, 0, 0.3),
-                        0 0 20px rgba(255, 255, 255, 0.05);
+                    background: rgba(255, 255, 255, 0.06);
+                    border-color: rgba(255, 255, 255, 0.12);
+                    transform: translateY(-1px) scale(1.02);
                 }
                 .day-pill-default:hover::before {
-                    opacity: 1;
+                    opacity: 0.5;
                 }
                 .day-pill-default:hover::after {
                     opacity: 1;
-                    transform: scale(1);
                 }
                 .day-pill-default:active {
                     transform: translateY(0) scale(0.98);
                 }
 
                 /* Selected Day - Clean White/Grey */
+                /* Selected Day - Clean White/Grey */
                 .day-pill-selected {
                     background: linear-gradient(180deg, #ffffff 0%, #e5e5e7 100%) !important;
                     border-color: rgba(255, 255, 255, 0.3) !important;
                     box-shadow: 
-                        0 4px 20px rgba(255, 255, 255, 0.2),
-                        0 0 40px rgba(255, 255, 255, 0.1),
+                        0 4px 15px rgba(255, 255, 255, 0.15),
+                        0 0 30px rgba(255, 255, 255, 0.05),
                         inset 0 1px 0 rgba(255, 255, 255, 0.5);
                     transform: translateY(-1px);
+                    border-radius: 12px; /* Ensure rounding */
                 }
                 .day-pill-selected::before {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    border-radius: inherit; /* Crucial for round glow */
                     background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 40%);
                     opacity: 1;
                 }
