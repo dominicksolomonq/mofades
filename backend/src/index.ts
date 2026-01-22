@@ -288,15 +288,16 @@ interface GalleryItem {
 let galleryItems: GalleryItem[] = [];
 
 // Multer Storage Configuration
+// Multer Storage Configuration
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
+    destination: (req: any, file: any, cb: any) => {
         const uploadDir = path.join(__dirname, '../uploads');
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
         }
         cb(null, uploadDir);
     },
-    filename: (req, file, cb) => {
+    filename: (req: any, file: any, cb: any) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         cb(null, uniqueSuffix + path.extname(file.originalname));
     }
@@ -329,7 +330,10 @@ app.get('/api/gallery', (req, res) => {
 
 // POST /api/gallery/upload - Upload a new image
 app.post('/api/gallery/upload', upload.single('image'), (req, res) => {
-    if (!req.file) {
+    // Cast req to any to access .file
+    const file = (req as any).file;
+
+    if (!file) {
         return res.status(400).json({ error: 'No image file uploaded.' });
     }
 
@@ -337,7 +341,7 @@ app.post('/api/gallery/upload', upload.single('image'), (req, res) => {
 
     const newItem: GalleryItem = {
         id: `img-${Date.now()}`,
-        imageUrl: `/uploads/${req.file.filename}`,
+        imageUrl: `/uploads/${file.filename}`,
         username: username || 'Anonymous', // Default to Anonymous if no name provided
         status: 'pending', // Default strictly to pending (moderated)
         timestamp: new Date()
