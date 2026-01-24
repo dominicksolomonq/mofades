@@ -27,8 +27,7 @@ export const Experience: React.FC<ModelProps> = (props) => {
                 autoRotateSpeed={0.8}
                 enableZoom={false}
                 enablePan={false}
-                enableDamping
-                dampingFactor={0.05}
+                enableRotate={false} // Disable manual rotation to prevent "weird shifting"
                 minPolarAngle={Math.PI / 2 - 0.5}
                 maxPolarAngle={Math.PI / 2 + 0.5}
             />

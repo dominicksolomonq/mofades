@@ -20,6 +20,13 @@ const App: React.FC = () => {
     const [modelUrl, setModelUrl] = useState<string | null>(import.meta.env.VITE_MODEL_URL || '/test123.glb');
 
     const [isModelLoaded, setIsModelLoaded] = useState(false);
+    const [showPoster, setShowPoster] = useState(true);
+
+    const handleModelLoad = () => {
+        setIsModelLoaded(true);
+        // Fade out poster slightly after model is ready for smooth transition
+        setTimeout(() => setShowPoster(false), 800);
+    };
 
     // Fetch appointments from the backend
     const fetchAppointments = useCallback(async () => {
@@ -29,7 +36,6 @@ const App: React.FC = () => {
             setAppointments(data);
         } catch (error) {
             console.error("Failed to fetch appointments:", error);
-            // Optionally, set some error state to show in the UI
         }
     }, []);
 
@@ -50,7 +56,6 @@ const App: React.FC = () => {
                     })
                 });
             } catch (error) {
-                // Silently fail - analytics shouldn't break the app
                 console.debug('Analytics tracking failed:', error);
             }
         };
@@ -65,7 +70,7 @@ const App: React.FC = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, email }),
             });
-            const result = await response.json();
+            await response.json();
             fetchAppointments(); // Re-fetch to get the latest state
         } catch (error) {
             alert('An error occurred. Check the browser console (F12) for details.');
@@ -93,12 +98,25 @@ const App: React.FC = () => {
             <div className="absolute inset-0 z-0">
                 <Experience
                     url={modelUrl}
-                    onLoad={() => setIsModelLoaded(true)}
+                    onLoad={handleModelLoad}
                     onError={() => {
                         console.warn("Failed to load model. Please ensure 'test123.glb' is in your public folder.");
                         setIsModelLoaded(false);
+                        // Keep poster if fails? Or show error? For now, visuals are cleaner if we just keep poster or hide it.
+                        // Let's hide it so they at least see the UI.
+                        setShowPoster(false);
                     }}
                 />
+            </div>
+
+            {/* Loading Poster - Immediate visual feedback */}
+            <div className={`absolute inset-0 z-[5] flex items-center justify-center bg-[#050505] transition-opacity duration-1000 ${showPoster ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+                <div className="relative flex flex-col items-center">
+                    {/* Glow effect */}
+                    <div className="absolute inset-0 transform scale-150 bg-white/5 blur-3xl rounded-full"></div>
+                    <img src="/real logo website.png" alt="Loading Logo" className="w-24 h-24 md:w-32 md:h-32 object-contain relative z-10 animate-pulse" />
+                    <p className="text-white/20 text-xs mt-8 tracking-[4px] uppercase font-light">Loading Experience</p>
+                </div>
             </div>
 
             {/* Main UI Layer */}
