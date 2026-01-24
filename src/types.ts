@@ -49,6 +49,15 @@ export interface ModelProps {
     onLoad: () => void;
 }
 
+export interface Review {
+    id: string;
+    username: string;
+    stars: number;
+    text: string;
+    avatarColor: string; // Store color to be consistent or just rely on hash later
+    timestamp: string;
+}
+
 declare global {
     namespace JSX {
         interface IntrinsicElements {

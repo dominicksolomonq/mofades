@@ -172,45 +172,56 @@ export const BookingOverlay: React.FC<BookingProps> = ({ isOpen, onClose, appoin
                                         </div>
                                     </div>
 
-                                    <div className="mb-8">
+                                    <div className="mb-8 space-y-4">
                                         <p className="text-zinc-400 text-xs uppercase mb-2 ml-4">Ihre Daten</p>
-                                        <div className="bg-[#2C2C2E] rounded-xl overflow-hidden">
-                                            <div className="border-b border-[#3A3A3C]">
-                                                <input
-                                                    type="text"
-                                                    value={name}
-                                                    onChange={(e) => setName(e.target.value)}
-                                                    required
-                                                    className="w-full bg-transparent p-3 md:p-4 text-white placeholder-zinc-500 focus:outline-none text-sm md:text-base"
-                                                    placeholder="Vollständiger Name"
-                                                />
+
+                                        {/* Name Input */}
+                                        <div className="group relative">
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-white transition-colors duration-300">
+                                                <i className="far fa-user"></i>
                                             </div>
-                                            <div>
-                                                <input
-                                                    type="email"
-                                                    value={email}
-                                                    onChange={(e) => setEmail(e.target.value)}
-                                                    required
-                                                    className="w-full bg-transparent p-3 md:p-4 text-white placeholder-zinc-500 focus:outline-none text-sm md:text-base"
-                                                    placeholder="E-Mail Adresse"
-                                                />
+                                            <input
+                                                type="text"
+                                                value={name}
+                                                onChange={(e) => setName(e.target.value)}
+                                                required
+                                                className="w-full bg-[#1C1C1E]/60 backdrop-blur-md border border-white/5 rounded-xl p-4 pl-12 text-white placeholder-zinc-600 focus:outline-none focus:border-white/20 focus:bg-[#2C2C2E]/80 transition-all duration-300 shadow-sm focus:shadow-[0_0_20px_rgba(255,255,255,0.05)]"
+                                                placeholder="Vollständiger Name"
+                                            />
+                                            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                                        </div>
+
+                                        {/* Email Input */}
+                                        <div className="group relative">
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-white transition-colors duration-300">
+                                                <i className="far fa-envelope"></i>
                                             </div>
+                                            <input
+                                                type="email"
+                                                value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                                required
+                                                className="w-full bg-[#1C1C1E]/60 backdrop-blur-md border border-white/5 rounded-xl p-4 pl-12 text-white placeholder-zinc-600 focus:outline-none focus:border-white/20 focus:bg-[#2C2C2E]/80 transition-all duration-300 shadow-sm focus:shadow-[0_0_20px_rgba(255,255,255,0.05)]"
+                                                placeholder="E-Mail Adresse"
+                                            />
+                                            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
                                         </div>
                                     </div>
 
-                                    <div className="flex gap-3">
+                                    <div className="flex gap-3 pt-2">
                                         <button
                                             type="button"
                                             onClick={() => setSelectedSlot(null)}
-                                            className="flex-1 bg-[#2C2C2E] text-white py-3 md:py-3.5 rounded-xl font-semibold active:scale-95 transition-transform text-sm md:text-base"
+                                            className="flex-1 bg-[#1C1C1E] hover:bg-[#2C2C2E] border border-white/5 text-zinc-300 py-3.5 rounded-xl font-medium active:scale-95 transition-all duration-200 text-sm md:text-base"
                                         >
                                             Zurück
                                         </button>
                                         <button
                                             type="submit"
-                                            className="flex-1 bg-gradient-to-b from-white to-[#e5e5e7] text-black py-3 md:py-3.5 rounded-xl font-semibold shadow-lg shadow-white/10 active:scale-95 transition-all duration-200 hover:shadow-white/20 text-sm md:text-base"
+                                            className="flex-1 relative overflow-hidden bg-white text-black py-3.5 rounded-xl font-semibold active:scale-95 transition-all duration-300 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] text-sm md:text-base group"
                                         >
-                                            Buchen
+                                            <span className="relative z-10">Termin bestätigen</span>
+                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                                         </button>
                                     </div>
                                 </form>

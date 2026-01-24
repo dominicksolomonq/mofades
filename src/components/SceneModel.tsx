@@ -45,15 +45,18 @@ export const SceneModel: React.FC<ExtendedModelProps> = ({ url, onError, onLoad,
 
     const targetUrl = url || '/test123.glb';
 
-    let gltf;
-    try {
-        gltf = useGLTF(targetUrl);
-    } catch {
-        gltf = null;
-    }
+    // Use useGLTF hook directly - this will suspend if loading
+    const gltf = useGLTF(targetUrl);
 
-    if (gltf && onLoad) onLoad();
-    if (!gltf && onError) onError();
+    // Call onLoad when the component mounts (which happens after Suspense finishes)
+    useEffect(() => {
+        if (gltf && onLoad) onLoad();
+    }, [gltf, onLoad]);
+
+    // Handle any errors that might slip through (though likely caught by ErrorBoundary)
+    useEffect(() => {
+        if (!gltf && onError) onError();
+    }, [gltf, onError]);
 
     // --- Metallic Material (hell, glossy, hochwertig) ---
     const metalMaterial = new THREE.MeshPhysicalMaterial({
@@ -171,16 +174,12 @@ export const SceneModel: React.FC<ExtendedModelProps> = ({ url, onError, onLoad,
         <group ref={groupRef} scale={[responsiveScale, responsiveScale, responsiveScale]}>
             <group ref={modelRef}>
                 <Center>
-                    {gltf ? (
-                        <primitive object={gltf.scene} />
-                    ) : (
-                        <mesh>
-                            <sphereGeometry args={[0.5, 32, 32]} />
-                            <meshStandardMaterial color="#ff3333" metalness={0.8} roughness={0.2} />
-                        </mesh>
-                    )}
+                    <primitive object={gltf.scene} />
                 </Center>
             </group>
         </group>
     );
 };
+
+// Preload the default model to ensure instant loading
+useGLTF.preload('/test123.glb');

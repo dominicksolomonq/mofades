@@ -384,6 +384,73 @@ app.delete('/api/gallery/:id', (req, res) => {
     res.json({ success: true });
 });
 
+// --- Reviews Logic ---
+interface Review {
+    id: string;
+    username: string;
+    stars: number;
+    text: string;
+    avatarColor: string; // e.g. "bg-red-500"
+    timestamp: Date;
+}
+
+let reviews: Review[] = [];
+
+// Basic Bad Word Filter (German/English common subset)
+const badWords = ['scheiße', 'fuck', 'shit', 'arsch', 'bitch', 'idiot', 'bastard', 'hitler', 'nazi', 'whore', 'slut', 'penis', 'dick', 'cock', 'fotze', 'missgeburt', 'wichser'];
+
+const containsBadWords = (text: string): boolean => {
+    const lower = text.toLowerCase();
+    return badWords.some(word => lower.includes(word));
+};
+
+// GET /api/reviews
+app.get('/api/reviews', (req, res) => {
+    // Return recent reviews first
+    res.json(reviews.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()));
+});
+
+// POST /api/reviews - Submit a review
+app.post('/api/reviews', (req, res) => {
+    const { username, stars, text } = req.body;
+
+    if (!username || !stars) {
+        return res.status(400).json({ error: 'Username and stars are required.' });
+    }
+
+    if (text && text.length > 50) {
+        return res.status(400).json({ error: 'Text max 50 characters.' });
+    }
+
+    // Filter bad words in username or text
+    if (containsBadWords(username) || (text && containsBadWords(text))) {
+        return res.status(400).json({ error: 'Be respectful. Profanity is not allowed.' });
+    }
+
+    // Generate random avatar color
+    const colors = ['bg-amber-600', 'bg-stone-600', 'bg-zinc-600', 'bg-slate-600', 'bg-neutral-600', 'bg-orange-700', 'bg-cyan-800', 'bg-teal-700'];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+    const newReview: Review = {
+        id: `rev-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        username: username.trim().substring(0, 15), // Limit username length
+        stars: Math.min(5, Math.max(1, stars)),
+        text: text ? text.trim().substring(0, 50) : '',
+        avatarColor: randomColor,
+        timestamp: new Date()
+    };
+
+    reviews.push(newReview);
+    res.json({ success: true, review: newReview });
+});
+
+// DELETE /api/reviews/:id - Admin Delete
+app.delete('/api/reviews/:id', (req, res) => {
+    const { id } = req.params;
+    reviews = reviews.filter(r => r.id !== id);
+    res.json({ success: true });
+});
+
 // --- Start Server ---
 app.listen(PORT, () => {
     console.log(`Backend server is running on http://localhost:${PORT}`);

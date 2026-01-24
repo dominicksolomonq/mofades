@@ -4,6 +4,12 @@
 
 This is a full-stack web application for **MO STYLES**, a modern barber shop. The application features a visually-driven frontend with a 3D model centerpiece and a functional backend to manage appointments.
 
+### ✅ Current Status & Recent Achievements (22.01.2026)
+-   **Deployment**: Validated Nginx configuration for Raspberry Pi. Critical finding: The `/uploads` route **must** use `proxy_pass http://localhost:3001` to bypass Nginx permission issues with user home directories.
+-   **Gallery Admin**: Implemented a split-view interface ("Eingang" vs "Live") for better moderation workflow.
+-   **Animations**: Implemented a 1:1 Apple Pay success animation (Circle Draw -> Checkmark -> Bounce) synced with sound.
+-   **Backend**: Fixed TypeScript/Multer issues for production builds.
+
 ### Architecture
 -   **Frontend**: A single-page application built with **React** and **Vite**. It uses **TypeScript** for type safety.
 -   **Backend**: A **Node.js** server using the **Express** framework, also written in **TypeScript**.
