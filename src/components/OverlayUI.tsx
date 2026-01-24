@@ -1,5 +1,6 @@
 import React from 'react';
 import { UIProps } from '../types';
+import { IOSInstallPrompt } from './IOSInstallPrompt';
 
 export const OverlayUI: React.FC<UIProps> = ({ onOpenGallery, onOpenBooking, onOpenAdmin, modelLoaded }) => {
     return (
@@ -40,6 +41,8 @@ export const OverlayUI: React.FC<UIProps> = ({ onOpenGallery, onOpenBooking, onO
                     <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-300 group-hover:w-full"></span>
                 </button>
             </div>
+            {/* IOS Install Prompt */}
+            <IOSInstallPrompt />
         </div>
     );
 };

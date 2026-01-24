@@ -160,18 +160,21 @@ export const SceneModel: React.FC<ExtendedModelProps> = ({ url, onError, onLoad,
         }
     });
 
-    // Responsive scaling for mobile, tablet, and desktop
-    // Mobile (viewport.width < 4): 60% size
-    // Tablet (viewport.width < 6): 75% size
-    // Desktop: 90% size (slightly smaller for better fit)
-    const responsiveScale = viewport.width < 4
-        ? 0.45   // Mobile: Much smaller (was 0.6)
-        : viewport.width < 6
-            ? 0.65   // Tablet: Smaller (was 0.75)
-            : 0.85;  // Desktop: Slightly smaller (was 0.9)
+    // Responsive scaling and positioning
+    // User request: "smaller for mobile... more in the back"
+    const isMobile = viewport.width < 5;
+
+    const responsiveScale = isMobile
+        ? 0.35   // Mobile: Significantly smaller
+        : viewport.width < 7
+            ? 0.65   // Tablet
+            : 0.85;  // Desktop
+
+    // Push model back on mobile to fit screen better (Perspective Camera effect + literal position)
+    const responsivePositionZ = isMobile ? -1.5 : 0;
 
     return (
-        <group ref={groupRef} scale={[responsiveScale, responsiveScale, responsiveScale]}>
+        <group ref={groupRef} scale={[responsiveScale, responsiveScale, responsiveScale]} position={[0, 0, responsivePositionZ]}>
             <group ref={modelRef}>
                 <Center>
                     <primitive object={gltf.scene} />

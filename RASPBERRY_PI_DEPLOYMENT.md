@@ -1,6 +1,29 @@
 # MO STYLES - Raspberry Pi Deployment Guide
 
-## 📋 Backend Konfiguration
+## 🔄 Update-Prozess (Neu!)
+Wenn du Änderungen am Code gemacht hast (Git Push), führe diese Schritte auf dem Raspberry Pi aus:
+
+```bash
+# 1. Neuesten Code holen
+cd /home/pi/mo-test-19.1
+git pull
+
+# 2. Frontend neu bauen
+npm install
+npm run build
+
+# 3. Neue Frontend-Dateien veröffentlichen
+sudo cp -r dist/* /var/www/html/
+
+# 4. Backend neu bauen und neustarten
+cd backend
+npm install
+npm run build
+pm2 restart mo-styles-backend
+```
+*Fertig! Die Website ist nun auf dem neuesten Stand.*
+
+---
 
 ### Server Port
 ```
