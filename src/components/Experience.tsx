@@ -1,6 +1,6 @@
 import React, { Suspense, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { Stars, Environment, OrbitControls, ContactShadows } from '@react-three/drei';
+import { Stars, Environment, OrbitControls, ContactShadows, Sparkles } from '@react-three/drei';
 import { SceneModel } from './SceneModel';
 import { ModelProps } from '../types';
 
@@ -24,31 +24,45 @@ export const Experience: React.FC<ModelProps> = (props) => {
             {/* Controls removed to prevent any interaction/shifting */}
             {/* The model rotates itself in SceneModel.tsx */}
 
-            {/* Background */}
-            <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
+            {/* Cinematic Atmosphere */}
+            <fog attach="fog" args={['#050505', 8, 25]} />
+            <Sparkles count={800} scale={15} size={3} speed={0.3} opacity={0.4} color="#ffffff" />
+
+            {/* Background Stars (Keep them but maybe fewer/fainter if we have sparkles) */}
+            <Stars radius={100} depth={50} count={2000} factor={4} saturation={0} fade speed={1} />
 
             {/* Studio Environment for Reflections */}
             <Environment preset="city" blur={0.8} />
 
-            {/* Studio Lighting Setup */}
-            <ambientLight intensity={0.2} />
+            {/* Enhanced Studio Lighting Setup */}
+            <ambientLight intensity={0.3} />
 
-            {/* Main Key Light - Casting shadows */}
+            {/* Main Key Light - Cool White */}
             <spotLight
                 position={[10, 10, 10]}
-                intensity={15}
+                intensity={20}
                 angle={0.4}
                 penumbra={1}
                 castShadow
                 shadow-bias={-0.0001}
+                color="#eef2ff"
             />
 
-            {/* Rim Light (Back Light) - Creates the silhouette/edge definition */}
+            {/* Rim Light (Back Light) - Cyan/Blue Tint for Modern Feel */}
             <spotLight
                 position={[-5, 5, -5]}
-                intensity={20}
-                color="#aaccff"
+                intensity={25}
+                color="#00ddff"
                 angle={0.5}
+                penumbra={1}
+            />
+
+            {/* Secondary Rim Light - Purple Tint for Contrast */}
+            <spotLight
+                position={[5, 0, -5]}
+                intensity={15}
+                color="#aa00ff"
+                angle={0.6}
                 penumbra={1}
             />
 

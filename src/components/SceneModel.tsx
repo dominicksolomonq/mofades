@@ -94,13 +94,34 @@ export const SceneModel: React.FC<ExtendedModelProps> = ({ url, onError, onLoad,
     // Entrance animation + Float
     const lastFrameTime = useRef<number>(0);
 
-    useFrame((state) => {
+    // Responsive scaling and positioning
+    // User request: "smaller for mobile... more in the back"
+    const isMobile = viewport.width < 5;
+
+    const responsiveScale = isMobile
+        ? 0.35   // Mobile: Significantly smaller
+        : viewport.width < 7
+            ? 0.65   // Tablet
+            : 0.85;  // Desktop
+
+    // Push model back on mobile to fit screen better (Perspective Camera effect + literal position)
+    const responsivePositionZ = isMobile ? -1.5 : 0;
+
+    // Scale Animation Ref
+    const currentScale = useRef(0);
+
+    useFrame((state, delta) => {
         if (!groupRef.current || !modelRef.current) return;
 
         const t = state.clock.getElapsedTime();
 
         // Float animation (always active)
         groupRef.current.position.y = Math.sin(t * 0.5) * 0.1;
+
+        // Smooth Scale Entrance
+        // Lerp towards target scale
+        currentScale.current = THREE.MathUtils.lerp(currentScale.current, responsiveScale, delta * 2.5);
+        groupRef.current.scale.setScalar(currentScale.current);
 
         // Skip rotation animation if not initialized
         if (!isInitialized.current) return;
@@ -109,7 +130,7 @@ export const SceneModel: React.FC<ExtendedModelProps> = ({ url, onError, onLoad,
         const elapsed = now - animationStartTime.current;
 
         // Calculate delta using our own tracking (more reliable than getDelta with React state)
-        const delta = lastFrameTime.current > 0 ? now - lastFrameTime.current : 0.016;
+        const dt = lastFrameTime.current > 0 ? now - lastFrameTime.current : 0.016;
         lastFrameTime.current = now;
 
         if (animationPhase.current === 'windup') {
@@ -143,7 +164,7 @@ export const SceneModel: React.FC<ExtendedModelProps> = ({ url, onError, onLoad,
             const currentVelocity = startVelocity - (startVelocity - targetIdleVelocity) * velocityProgress;
 
             // Integrate velocity to get new position
-            currentRotation.current += currentVelocity * delta;
+            currentRotation.current += currentVelocity * dt;
             modelRef.current.rotation.y = currentRotation.current;
 
             if (progress >= 1) {
@@ -155,26 +176,13 @@ export const SceneModel: React.FC<ExtendedModelProps> = ({ url, onError, onLoad,
         } else if (animationPhase.current === 'idle') {
             // Continue rotating the model at constant idle speed - never stops
             const idleSpeedRadPerSec = 0.5;
-            currentRotation.current += idleSpeedRadPerSec * delta;
+            currentRotation.current += idleSpeedRadPerSec * dt;
             modelRef.current.rotation.y = currentRotation.current;
         }
     });
 
-    // Responsive scaling and positioning
-    // User request: "smaller for mobile... more in the back"
-    const isMobile = viewport.width < 5;
-
-    const responsiveScale = isMobile
-        ? 0.35   // Mobile: Significantly smaller
-        : viewport.width < 7
-            ? 0.65   // Tablet
-            : 0.85;  // Desktop
-
-    // Push model back on mobile to fit screen better (Perspective Camera effect + literal position)
-    const responsivePositionZ = isMobile ? -1.5 : 0;
-
     return (
-        <group ref={groupRef} scale={[responsiveScale, responsiveScale, responsiveScale]} position={[0, 0, responsivePositionZ]}>
+        <group ref={groupRef} position={[0, 0, responsivePositionZ]}>
             <group ref={modelRef}>
                 <Center>
                     <primitive object={gltf.scene} />
