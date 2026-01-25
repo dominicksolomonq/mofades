@@ -21,16 +21,8 @@ export const Experience: React.FC<ModelProps> = (props) => {
             className="w-full h-full"
             style={{ background: 'transparent' }}
         >
-            {/* Controls - camera orbits around the scene for background movement */}
-            <OrbitControls
-                autoRotate={true}
-                autoRotateSpeed={0.8}
-                enableZoom={false}
-                enablePan={false}
-                enableRotate={false} // Disable manual rotation to prevent "weird shifting"
-                minPolarAngle={Math.PI / 2 - 0.5}
-                maxPolarAngle={Math.PI / 2 + 0.5}
-            />
+            {/* Controls removed to prevent any interaction/shifting */}
+            {/* The model rotates itself in SceneModel.tsx */}
 
             {/* Background */}
             <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
