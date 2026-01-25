@@ -224,12 +224,12 @@ export const GalleryOverlay: React.FC<GalleryProps> = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6 animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-6 animate-fade-in">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity duration-300" onClick={onClose}></div>
 
             <div className={`
-                relative w-full max-w-5xl h-[85vh] md:h-[90vh] bg-[#121212]/95 backdrop-blur-2xl 
-                rounded-3xl shadow-2xl border border-white/5 flex flex-col overflow-hidden
+                relative w-full max-w-5xl h-full md:h-[90vh] bg-[#121212]/95 backdrop-blur-2xl 
+                rounded-none md:rounded-3xl shadow-2xl border-0 md:border border-white/5 flex flex-col overflow-hidden
                 transform transition-all duration-500 ease-out animate-slide-up
             `}>
                 <style>{`
