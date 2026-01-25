@@ -185,7 +185,7 @@ export const BookingOverlay: React.FC<BookingProps> = ({ isOpen, onClose, appoin
                                                 value={name}
                                                 onChange={(e) => setName(e.target.value)}
                                                 required
-                                                className="w-full bg-[#1C1C1E]/60 backdrop-blur-md border border-white/5 rounded-xl p-4 pl-12 text-white placeholder-zinc-600 focus:outline-none focus:border-white/20 focus:bg-[#2C2C2E]/80 transition-all duration-300 shadow-sm focus:shadow-[0_0_20px_rgba(255,255,255,0.05)]"
+                                                className="w-full text-base bg-[#1C1C1E]/60 backdrop-blur-md border border-white/5 rounded-xl p-4 pl-12 text-white placeholder-zinc-600 focus:outline-none focus:border-white/20 focus:bg-[#2C2C2E]/80 transition-all duration-300 shadow-sm focus:shadow-[0_0_20px_rgba(255,255,255,0.05)]"
                                                 placeholder="Vollständiger Name"
                                             />
                                             <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
@@ -201,7 +201,7 @@ export const BookingOverlay: React.FC<BookingProps> = ({ isOpen, onClose, appoin
                                                 value={email}
                                                 onChange={(e) => setEmail(e.target.value)}
                                                 required
-                                                className="w-full bg-[#1C1C1E]/60 backdrop-blur-md border border-white/5 rounded-xl p-4 pl-12 text-white placeholder-zinc-600 focus:outline-none focus:border-white/20 focus:bg-[#2C2C2E]/80 transition-all duration-300 shadow-sm focus:shadow-[0_0_20px_rgba(255,255,255,0.05)]"
+                                                className="w-full text-base bg-[#1C1C1E]/60 backdrop-blur-md border border-white/5 rounded-xl p-4 pl-12 text-white placeholder-zinc-600 focus:outline-none focus:border-white/20 focus:bg-[#2C2C2E]/80 transition-all duration-300 shadow-sm focus:shadow-[0_0_20px_rgba(255,255,255,0.05)]"
                                                 placeholder="E-Mail Adresse"
                                             />
                                             <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />

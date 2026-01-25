@@ -327,7 +327,7 @@ export const GalleryOverlay: React.FC<GalleryProps> = ({ isOpen, onClose }) => {
                         <div className="max-w-2xl mx-auto pb-10 flex flex-col h-full">
 
                             {/* Reviews List (Scrollable Area) */}
-                            <div className="flex-1 space-y-6 overflow-y-auto px-2 py-4 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                            <div className="flex-1 space-y-6 overflow-y-auto px-2 pt-4 pb-24 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                                 <style>{`
                                     .no-scrollbar::-webkit-scrollbar {
                                         display: none;
@@ -395,7 +395,7 @@ export const GalleryOverlay: React.FC<GalleryProps> = ({ isOpen, onClose }) => {
                                                 value={reviewName}
                                                 onChange={e => setReviewName(e.target.value)}
                                                 placeholder="Name"
-                                                className="bg-transparent text-white text-xs font-bold focus:outline-none placeholder-zinc-600 mb-0.5 w-[80px]"
+                                                className="bg-transparent text-white text-base font-bold focus:outline-none placeholder-zinc-600 mb-0.5 w-[80px]"
                                             />
                                             <input
                                                 type="text"
@@ -403,7 +403,7 @@ export const GalleryOverlay: React.FC<GalleryProps> = ({ isOpen, onClose }) => {
                                                 value={reviewText}
                                                 onChange={e => setReviewText(e.target.value)}
                                                 placeholder="Schreibe eine Bewertung..."
-                                                className="bg-transparent text-white text-sm focus:outline-none placeholder-zinc-500 w-full"
+                                                className="bg-transparent text-white text-base focus:outline-none placeholder-zinc-500 w-full"
                                             />
                                         </div>
                                     </div>
