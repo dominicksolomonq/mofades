@@ -5,6 +5,27 @@ import * as THREE from 'three';
 import { SceneModel } from './SceneModel';
 import { ModelProps } from '../types';
 
+// Camera Rig for Scroll-Through Zoom Effect
+const CameraRig: React.FC<{ isOverlayOpen?: boolean }> = ({ isOverlayOpen }) => {
+    useFrame((state) => {
+        // Zoom in when overlay is open (Gallery/Booking) for "Dive In" feel
+        // Target Z: 8 (default) vs 4.5 (zoomed)
+        const targetZ = isOverlayOpen ? 4.5 : 8;
+
+        // Creating a slight parallax drift for camera based on mouse
+        const parallaxX = (state.pointer.x * state.viewport.width) * 0.05;
+        const parallaxY = (state.pointer.y * state.viewport.height) * 0.05;
+
+        // Smooth Lerp
+        state.camera.position.z = THREE.MathUtils.lerp(state.camera.position.z, targetZ, 0.03);
+        state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, parallaxX, 0.05);
+        state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, parallaxY, 0.05);
+
+        state.camera.lookAt(0, 0, 0);
+    });
+    return null;
+};
+
 // Interactive Light Component
 const InteractiveLights: React.FC = () => {
     const light = useRef<THREE.SpotLight>(null);
@@ -53,6 +74,11 @@ export const Experience: React.FC<ModelProps> = (props) => {
             className="w-full h-full"
             style={{ background: 'transparent' }}
         >
+            {/* Camera Control System */}
+            <CameraRig isOverlayOpen={props.isOverlayOpen} />
+
+
+
             {/* Controls removed to prevent any interaction/shifting */}
             {/* The model rotates itself in SceneModel.tsx */}
 

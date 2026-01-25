@@ -98,6 +98,7 @@ const App: React.FC = () => {
             <div className="absolute inset-0 z-0">
                 <Experience
                     url={modelUrl}
+                    isOverlayOpen={isGalleryOpen || isBookingOpen || isAdminOpen}
                     onLoad={handleModelLoad}
                     onError={() => {
                         console.warn("Failed to load model. Please ensure 'test123.glb' is in your public folder.");

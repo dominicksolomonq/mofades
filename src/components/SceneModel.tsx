@@ -105,7 +105,7 @@ export const SceneModel: React.FC<ExtendedModelProps> = ({ url, onError, onLoad,
             : 0.85;  // Desktop
 
     // Push model back on mobile to fit screen better (Perspective Camera effect + literal position)
-    const responsivePositionZ = isMobile ? -1.5 : 0;
+    const responsivePositionZ = isMobile ? -2.5 : 0;
 
     // Scale Animation Ref
     const currentScale = useRef(0);

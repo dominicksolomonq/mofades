@@ -47,6 +47,7 @@ export interface ModelProps {
     url: string | null;
     onError: () => void;
     onLoad: () => void;
+    isOverlayOpen?: boolean;
 }
 
 export interface Review {
