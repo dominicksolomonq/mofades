@@ -1,8 +1,40 @@
-import React, { Suspense, useState } from 'react';
-import { Canvas } from '@react-three/fiber';
+import React, { Suspense, useState, useRef } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Stars, Environment, OrbitControls, ContactShadows, Sparkles } from '@react-three/drei';
+import * as THREE from 'three';
 import { SceneModel } from './SceneModel';
 import { ModelProps } from '../types';
+
+// Interactive Light Component
+const InteractiveLights: React.FC = () => {
+    const light = useRef<THREE.SpotLight>(null);
+    const { viewport } = useThree();
+
+    useFrame((state) => {
+        if (light.current) {
+            // Move light based on pointer position for dynamic shadows
+            // We invert X slightly to make shadows move naturally against the mouse
+            const targetX = (state.pointer.x * viewport.width) / 3;
+            const targetY = (state.pointer.y * viewport.height) / 3;
+
+            light.current.position.x = THREE.MathUtils.lerp(light.current.position.x, targetX, 0.05);
+            light.current.position.y = THREE.MathUtils.lerp(light.current.position.y, targetY, 0.05);
+        }
+    });
+
+    return (
+        <spotLight
+            ref={light}
+            position={[0, 0, 10]}
+            intensity={8}
+            color="#fff" // Clean white interaction light
+            distance={25}
+            angle={0.25}
+            penumbra={1}
+            castShadow
+        />
+    );
+};
 
 export const Experience: React.FC<ModelProps> = (props) => {
     // Track when entrance animation is complete (for potential future use)
@@ -33,6 +65,9 @@ export const Experience: React.FC<ModelProps> = (props) => {
 
             {/* Studio Environment for Reflections */}
             <Environment preset="city" blur={0.8} />
+
+            {/* Interactive Flashlight / Dynamic Shadow */}
+            <InteractiveLights />
 
             {/* Enhanced Studio Lighting Setup */}
             <ambientLight intensity={0.3} />

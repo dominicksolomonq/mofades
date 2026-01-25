@@ -24,22 +24,35 @@ export const OverlayUI: React.FC<UIProps> = ({ onOpenGallery, onOpenBooking, onO
                 <i className="fas fa-lock text-xs md:text-sm"></i>
             </button>
 
-            {/* Bottom Navigation - Mobile optimized */}
-            <div className="absolute bottom-8 md:bottom-12 lg:bottom-16 left-1/2 transform -translate-x-1/2 flex flex-col md:flex-row gap-4 md:gap-8 lg:gap-10 pointer-events-auto w-full items-center justify-center px-4">
+            {/* Bottom Navigation - Glassmorphism Upgrade */}
+            <div className="absolute bottom-8 md:bottom-12 lg:bottom-16 left-1/2 transform -translate-x-1/2 flex flex-col md:flex-row gap-4 md:gap-8 pointer-events-auto w-full max-w-xs md:max-w-none items-center justify-center px-6">
+
+                {/* Book Button */}
                 <button
                     onClick={onOpenBooking}
-                    className="bg-transparent border-none text-white text-xs md:text-sm tracking-[1.5px] md:tracking-[2px] uppercase opacity-70 hover:opacity-100 transition-opacity relative py-2 group cursor-pointer"
+                    className="relative w-full md:w-auto overflow-hidden group bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 hover:border-white/30 px-10 py-4 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(0,0,0,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]"
                 >
-                    <span className="opacity-50 mr-1.5 md:mr-2">00</span> Termin buchen
-                    <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-300 group-hover:w-full"></span>
+                    <div className="relative z-10 flex items-center justify-center gap-3">
+                        <span className="text-white/40 font-mono text-xs border-r border-white/20 pr-3">01</span>
+                        <span className="text-white text-sm md:text-base tracking-[3px] uppercase font-light group-hover:text-white transition-colors duration-300">Termin</span>
+                    </div>
+                    {/* Shimmer Effect */}
+                    <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12"></div>
                 </button>
+
+                {/* Gallery Button */}
                 <button
                     onClick={onOpenGallery}
-                    className="bg-transparent border-none text-white text-xs md:text-sm tracking-[1.5px] md:tracking-[2px] uppercase opacity-70 hover:opacity-100 transition-opacity relative py-2 group cursor-pointer"
+                    className="relative w-full md:w-auto overflow-hidden group bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 hover:border-white/30 px-10 py-4 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(0,0,0,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]"
                 >
-                    <span className="opacity-50 mr-1.5 md:mr-2">01</span> Galerie
-                    <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-300 group-hover:w-full"></span>
+                    <div className="relative z-10 flex items-center justify-center gap-3">
+                        <span className="text-white/40 font-mono text-xs border-r border-white/20 pr-3">02</span>
+                        <span className="text-white text-sm md:text-base tracking-[3px] uppercase font-light group-hover:text-white transition-colors duration-300">Galerie</span>
+                    </div>
+                    {/* Shimmer Effect */}
+                    <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12"></div>
                 </button>
+
             </div>
             {/* IOS Install Prompt */}
             <IOSInstallPrompt />
