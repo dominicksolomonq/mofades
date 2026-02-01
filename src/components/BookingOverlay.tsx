@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { BookingProps } from '../types';
 
 export const BookingOverlay: React.FC<BookingProps> = ({ isOpen, onClose, appointments, onBookSlot }) => {
@@ -7,6 +7,37 @@ export const BookingOverlay: React.FC<BookingProps> = ({ isOpen, onClose, appoin
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [showSuccess, setShowSuccess] = useState(false);
+
+    // Focus mode state for immersive input experience on mobile/tablet
+    const [focusedField, setFocusedField] = useState<'name' | 'email' | null>(null);
+    const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+    const nameInputRef = useRef<HTMLInputElement>(null);
+    const emailInputRef = useRef<HTMLInputElement>(null);
+    const formContainerRef = useRef<HTMLDivElement>(null);
+
+    // Handle keyboard visibility and scroll input into view
+    const handleFocus = useCallback((field: 'name' | 'email') => {
+        setFocusedField(field);
+        setIsKeyboardOpen(true);
+
+        // Small delay to wait for keyboard to appear
+        setTimeout(() => {
+            const inputRef = field === 'name' ? nameInputRef : emailInputRef;
+            if (inputRef.current) {
+                // Scroll the input into visible area above keyboard
+                inputRef.current.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                    inline: 'nearest'
+                });
+            }
+        }, 300);
+    }, []);
+
+    const handleBlur = useCallback(() => {
+        setFocusedField(null);
+        setIsKeyboardOpen(false);
+    }, []);
 
     // Extract unique dates and sort them
     const uniqueDates = useMemo(() => {
@@ -158,7 +189,7 @@ export const BookingOverlay: React.FC<BookingProps> = ({ isOpen, onClose, appoin
                             ) : (
                                 /* Step 2: Details Form */
                                 <form onSubmit={handleSubmit} className="animate-slide-in">
-                                    <div className="mb-6">
+                                    <div className={`mb-6 transition-all duration-500 ${focusedField ? 'focus-mode-inactive' : ''}`}>
                                         <p className="text-zinc-400 text-xs uppercase mb-2 ml-4">Termin Details</p>
                                         <div className="bg-[#2C2C2E] rounded-xl overflow-hidden">
                                             <div className="flex justify-between items-center p-3 md:p-4 border-b border-[#3A3A3C]">
@@ -173,42 +204,52 @@ export const BookingOverlay: React.FC<BookingProps> = ({ isOpen, onClose, appoin
                                     </div>
 
                                     <div className="mb-8 space-y-4">
-                                        <p className="text-zinc-400 text-xs uppercase mb-2 ml-4">Ihre Daten</p>
+                                        <p className={`text-zinc-400 text-xs uppercase mb-2 ml-4 transition-all duration-500 ${focusedField ? 'opacity-0 scale-95' : 'opacity-100'}`}>Ihre Daten</p>
 
-                                        {/* Name Input */}
-                                        <div className="group relative">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-white transition-colors duration-300">
+                                        {/* Name Input - With Immersive Focus Mode */}
+                                        <div className={`group relative transition-all duration-500 ease-out ${focusedField === 'name' ? 'focus-mode-active' : focusedField === 'email' ? 'focus-mode-inactive' : ''}`}>
+                                            <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-all duration-300 ${focusedField === 'name' ? 'text-white scale-110' : 'text-zinc-500 group-focus-within:text-white'}`}>
                                                 <i className="far fa-user"></i>
                                             </div>
                                             <input
+                                                ref={nameInputRef}
                                                 type="text"
                                                 value={name}
                                                 onChange={(e) => setName(e.target.value)}
+                                                onFocus={() => handleFocus('name')}
+                                                onBlur={handleBlur}
                                                 required
-                                                className="w-full text-base bg-[#1C1C1E]/60 backdrop-blur-md border border-white/5 rounded-xl p-4 pl-12 text-white placeholder-zinc-600 focus:outline-none focus:border-white/20 focus:bg-[#2C2C2E]/80 transition-all duration-300 shadow-sm focus:shadow-[0_0_20px_rgba(255,255,255,0.05)]"
+                                                className={`w-full text-base bg-[#1C1C1E]/60 backdrop-blur-md border rounded-xl p-4 pl-12 text-white placeholder-zinc-600 focus:outline-none transition-all duration-500 shadow-sm ${focusedField === 'name' ? 'border-white/40 bg-[#2C2C2E] scale-105 shadow-[0_0_40px_rgba(255,255,255,0.15)]' : 'border-white/5 focus:border-white/20 focus:bg-[#2C2C2E]/80 focus:shadow-[0_0_20px_rgba(255,255,255,0.05)]'}`}
                                                 placeholder="Vollständiger Name"
                                             />
+                                            {/* Glow ring effect when focused */}
+                                            <div className={`absolute inset-0 rounded-xl pointer-events-none transition-all duration-500 ${focusedField === 'name' ? 'ring-2 ring-white/20 ring-offset-2 ring-offset-transparent' : ''}`} />
                                             <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
                                         </div>
 
-                                        {/* Email Input */}
-                                        <div className="group relative">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-white transition-colors duration-300">
+                                        {/* Email Input - With Immersive Focus Mode */}
+                                        <div className={`group relative transition-all duration-500 ease-out ${focusedField === 'email' ? 'focus-mode-active' : focusedField === 'name' ? 'focus-mode-inactive' : ''}`}>
+                                            <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-all duration-300 ${focusedField === 'email' ? 'text-white scale-110' : 'text-zinc-500 group-focus-within:text-white'}`}>
                                                 <i className="far fa-envelope"></i>
                                             </div>
                                             <input
+                                                ref={emailInputRef}
                                                 type="email"
                                                 value={email}
                                                 onChange={(e) => setEmail(e.target.value)}
+                                                onFocus={() => handleFocus('email')}
+                                                onBlur={handleBlur}
                                                 required
-                                                className="w-full text-base bg-[#1C1C1E]/60 backdrop-blur-md border border-white/5 rounded-xl p-4 pl-12 text-white placeholder-zinc-600 focus:outline-none focus:border-white/20 focus:bg-[#2C2C2E]/80 transition-all duration-300 shadow-sm focus:shadow-[0_0_20px_rgba(255,255,255,0.05)]"
+                                                className={`w-full text-base bg-[#1C1C1E]/60 backdrop-blur-md border rounded-xl p-4 pl-12 text-white placeholder-zinc-600 focus:outline-none transition-all duration-500 shadow-sm ${focusedField === 'email' ? 'border-white/40 bg-[#2C2C2E] scale-105 shadow-[0_0_40px_rgba(255,255,255,0.15)]' : 'border-white/5 focus:border-white/20 focus:bg-[#2C2C2E]/80 focus:shadow-[0_0_20px_rgba(255,255,255,0.05)]'}`}
                                                 placeholder="E-Mail Adresse"
                                             />
+                                            {/* Glow ring effect when focused */}
+                                            <div className={`absolute inset-0 rounded-xl pointer-events-none transition-all duration-500 ${focusedField === 'email' ? 'ring-2 ring-white/20 ring-offset-2 ring-offset-transparent' : ''}`} />
                                             <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
                                         </div>
                                     </div>
 
-                                    <div className="flex gap-3 pt-2">
+                                    <div className={`flex gap-3 pt-2 transition-all duration-500 ${focusedField ? 'focus-mode-inactive' : ''}`}>
                                         <button
                                             type="button"
                                             onClick={() => setSelectedSlot(null)}
@@ -359,6 +400,69 @@ export const BookingOverlay: React.FC<BookingProps> = ({ isOpen, onClose, appoin
                 .no-scrollbar {
                     -ms-overflow-style: none;
                     scrollbar-width: none;
+                }
+
+                /* ===== IMMERSIVE FOCUS MODE STYLES ===== */
+                /* Only applies on mobile/tablet screens */
+                @media (max-width: 1024px) {
+                    .focus-mode-active {
+                        position: relative;
+                        z-index: 100;
+                        transform: scale(1.02);
+                        animation: focusPulse 2s infinite;
+                        /* Ensure input stays visible above keyboard */
+                        scroll-margin-top: 20px;
+                        scroll-margin-bottom: 200px;
+                    }
+                    
+                    .focus-mode-active::before {
+                        content: '';
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: rgba(0, 0, 0, 0.75);
+                        z-index: -1;
+                        animation: focusBackdropIn 0.3s ease-out forwards;
+                        pointer-events: none;
+                    }
+                    
+                    .focus-mode-inactive {
+                        filter: blur(4px);
+                        opacity: 0.25;
+                        transform: scale(0.98);
+                        pointer-events: none;
+                        transition: all 0.3s ease-out;
+                    }
+                    
+                    @keyframes focusPulse {
+                        0%, 100% { 
+                            box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+                        }
+                        50% { 
+                            box-shadow: 0 0 50px rgba(255, 255, 255, 0.2);
+                        }
+                    }
+                    
+                    @keyframes focusBackdropIn {
+                        from {
+                            opacity: 0;
+                        }
+                        to {
+                            opacity: 1;
+                        }
+                    }
+                }
+                
+                /* Desktop: Subtle focus effect without full immersion */
+                @media (min-width: 1025px) {
+                    .focus-mode-active {
+                        transform: scale(1.01);
+                    }
+                    .focus-mode-inactive {
+                        opacity: 0.7;
+                    }
                 }
             `}</style>
         </div >

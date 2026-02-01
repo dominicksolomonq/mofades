@@ -24,18 +24,18 @@ export const OverlayUI: React.FC<UIProps> = ({ onOpenGallery, onOpenBooking, onO
                 <i className="fas fa-lock text-xs md:text-sm"></i>
             </button>
 
-            {/* Bottom Navigation - Mobile optimized */}
-            <div className="absolute bottom-12 md:bottom-16 lg:bottom-20 left-1/2 transform -translate-x-1/2 flex flex-col md:flex-row gap-4 md:gap-8 lg:gap-10 pointer-events-auto w-full items-center justify-center px-4">
+            {/* Bottom Navigation - Mobile optimized with safe area */}
+            <div className="absolute bottom-6 pb-safe md:bottom-16 lg:bottom-20 left-1/2 transform -translate-x-1/2 flex flex-col md:flex-row gap-3 md:gap-8 lg:gap-10 pointer-events-auto w-full items-center justify-center px-4">
                 <button
                     onClick={onOpenBooking}
-                    className="bg-transparent border-none text-white text-xs md:text-sm tracking-[1.5px] md:tracking-[2px] uppercase opacity-70 hover:opacity-100 transition-opacity relative py-2 group cursor-pointer"
+                    className="bg-transparent border-none text-white text-[11px] md:text-sm tracking-[1.5px] md:tracking-[2px] uppercase opacity-70 hover:opacity-100 transition-opacity relative py-1.5 md:py-2 group cursor-pointer"
                 >
                     <span className="opacity-50 mr-1.5 md:mr-2">00</span> Termin buchen
                     <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-300 group-hover:w-full"></span>
                 </button>
                 <button
                     onClick={onOpenGallery}
-                    className="bg-transparent border-none text-white text-xs md:text-sm tracking-[1.5px] md:tracking-[2px] uppercase opacity-70 hover:opacity-100 transition-opacity relative py-2 group cursor-pointer"
+                    className="bg-transparent border-none text-white text-[11px] md:text-sm tracking-[1.5px] md:tracking-[2px] uppercase opacity-70 hover:opacity-100 transition-opacity relative py-1.5 md:py-2 group cursor-pointer"
                 >
                     <span className="opacity-50 mr-1.5 md:mr-2">01</span> Galerie
                     <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-white transition-all duration-300 group-hover:w-full"></span>

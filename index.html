@@ -35,6 +35,18 @@
       scrollbar-width: none;
       -ms-overflow-style: none;
     }
+
+    /* iOS Safe Area Support */
+    .pb-safe {
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    /* Viewport fix for iOS */
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+      .pb-safe {
+        padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+      }
+    }
   </style>
   <script type="importmap">
 {
