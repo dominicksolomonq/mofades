@@ -33,11 +33,11 @@ let pageViews: PageView[] = [];
 let totalVisits = 0;
 
 // --- Appointment Generation Logic ---
-const generateWeeklyAppointments = (): Appointment[] => {
+const generateAppointments = (days: number = 14): Appointment[] => {
     const slots: Appointment[] = [];
     const today = new Date();
 
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < days; i++) {
         const currentDate = new Date(today);
         currentDate.setDate(today.getDate() + i);
 
@@ -63,7 +63,7 @@ const generateWeeklyAppointments = (): Appointment[] => {
 };
 
 // Initialize appointments
-appointments = generateWeeklyAppointments();
+appointments = generateAppointments(14);
 
 
 // --- Express App Setup ---
